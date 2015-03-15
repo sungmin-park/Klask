@@ -55,7 +55,7 @@ open class Klask : KlaskApp() {
         if (method == RequestMethod.POST) {
             throw NotImplementedException()
         }
-        val handler = router.findHandler(req.getRequestURI().toString())
+        val handler = router.findHandlerChain(req.getRequestURI().toString())
         if (handler == null) {
             resp.sendError(HttpServletResponse.SC_NOT_FOUND)
             return
