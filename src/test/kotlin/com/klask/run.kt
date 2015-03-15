@@ -14,4 +14,3 @@ object app : Klask() {
 fun main(args: Array<String>) {
     app.run()
 }
-

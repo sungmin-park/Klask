@@ -1,31 +1,37 @@
-package com.klask
+package com.klask.server
 
-import org.eclipse.jetty.server.Server
-import org.eclipse.jetty.servlet.ServletHandler
-import javax.servlet.http.HttpServlet
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
-import org.eclipse.jetty.servlet.ServletHolder
+import org.junit.Test
+import com.klask.Klask
+import com.klask.Route
+import java.util.concurrent.CountDownLatch
+import java.net.URL
+import org.junit.Assert
+import org.junit.Before
+import org.junit.After
+import java.util.concurrent.Semaphore
 
-fun main(args: Array<String>) {
-    val server = Server(8080)
-    val handler = ServletHandler()
-    handler.addServletWithMapping(ServletHolder(App()) , "/*")
-    server.setHandler(handler)
-    server.start()
-    server.join()
+object app : Klask() {
+    Route("/")
+    fun index(): String {
+        return "index"
+    }
 }
 
-class App : HttpServlet() {
-    {
-        println("App!!")
+class ServerTest {
+    Before
+    fun before() {
+        app.run(onBackground = true)
     }
-    override fun doGet(req: HttpServletRequest?, resp: HttpServletResponse?) {
-        if (resp == null) {
-            return
-        }
-        resp.setContentType("text/html")
-        resp.setStatus(HttpServletResponse.SC_OK)
-        resp.getWriter().println("App !")
+
+    After
+    fun after() {
+        app.stop()
+    }
+
+    Test
+    fun testRun() {
+        Assert.assertEquals(
+                "index", URL("http://localhost:8080").openConnection().getInputStream().reader("UTF-8").readText()
+        )
     }
 }
