@@ -10,11 +10,22 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException
 import com.klask.router.Router
 import com.klask.servlet.KlaskHttpServlet
 import com.klask.jetty.KlaskServerListener
+import java.io.Writer
 
 enum class RequestMethod {GET POST }
 
 abstract class KlaskApp {
     val router = Router(this)
+}
+
+abstract class Response {
+    abstract fun write(writer: Writer)
+}
+
+class StringResponse(val content: String): Response() {
+    override fun write(writer: Writer) {
+        writer.write(content)
+    }
 }
 
 open class Klask : KlaskApp() {
@@ -60,10 +71,10 @@ open class Klask : KlaskApp() {
             resp.sendError(HttpServletResponse.SC_NOT_FOUND)
             return
         }
-        val response = handler()
+        val response = handler.invoke()
         resp.setStatus(HttpServletResponse.SC_OK)
         val writer = resp.getWriter()
-        writer.write(response)
+        response.write(writer)
         writer.close()
     }
 
