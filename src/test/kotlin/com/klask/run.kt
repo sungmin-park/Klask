@@ -1,7 +1,7 @@
 package com.klask.run
 
 import com.klask.Klask
-import com.klask.Route
+import com.klask.router.Route
 
 
 object app : Klask() {

@@ -2,13 +2,11 @@ package com.klask.server
 
 import org.junit.Test
 import com.klask.Klask
-import com.klask.Route
-import java.util.concurrent.CountDownLatch
 import java.net.URL
 import org.junit.Assert
 import org.junit.Before
 import org.junit.After
-import java.util.concurrent.Semaphore
+import com.klask.router.Route
 
 object app : Klask() {
     Route("/")
