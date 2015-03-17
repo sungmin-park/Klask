@@ -8,12 +8,22 @@ object app : Klask() {
     Route("/")
     fun index() {
     }
+
+    Route("/post/<name>")
+    fun postShow() {
+    }
 }
 
 class RouterTest {
     Test
     fun testExactMatch() {
-        val chain = app.router.findHandlerChain("/")
-        Assert.assertEquals("/", chain?.rule)
+        Assert.assertEquals("/", app.router.findHandlerChain("/")?.rule)
+        Assert.assertEquals(null, app.router.findHandlerChain("/not-exist-url"))
+    }
+
+    Test
+    fun testStringPathVariable() {
+        val chain = app.router.findHandlerChain("/post/first post")
+        Assert.assertEquals("/post/<name>", chain?.rule)
     }
 }

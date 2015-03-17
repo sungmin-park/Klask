@@ -24,7 +24,9 @@ public class Router(val app: KlaskApp) {
                 .map { it to it.getAnnotation(javaClass<Route>()) }
                 .filter { it.second != null }
                 .sortBy { it.second.rule }
-                .firstOrNull { requestURI == urlPrefix + it.second.rule }
+                .firstOrNull {
+                    requestURI == urlPrefix + it.second.rule
+                }
         if (method != null) {
             return HandlerChain(app = app, rule = method.second.rule, child = null) {
                 val res = method.first.invoke(app)
