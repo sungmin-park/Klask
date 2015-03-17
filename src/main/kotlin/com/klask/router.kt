@@ -8,6 +8,7 @@ import java.lang.annotation.Target
 import com.klask.Response
 import java.lang.invoke.WrongMethodTypeException
 import com.klask.StringResponse
+import java.util.regex.Pattern
 
 Retention(RetentionPolicy.RUNTIME)
 Target(ElementType.METHOD)
@@ -39,6 +40,47 @@ public class Router(val app: KlaskApp) {
         }
         return null
     }
+}
+
+data class ParseResult(val pathVariables: Map<String, Any>)
+data class RulePattern(val pattern: Pattern, val groups: List<String>) {
+    override fun equals(other: Any?): Boolean {
+        if (other !is RulePattern) {
+            return false
+        }
+        return pattern.pattern() == other.pattern.pattern() && groups == other.groups
+    }
+}
+
+fun parse(rule: String, uri: String): ParseResult? {
+    val rulePattern = compile(rule)
+    val matched = match(rulePattern = rulePattern, uri = uri)
+    if (matched == null) {
+        return null
+    }
+    return ParseResult(pathVariables = matched)
+}
+
+fun compile(rule: String): RulePattern {
+    val groups = arrayListOf<String>()
+    val patched = rule.replaceAll("<([^>]+)>") {
+        groups.add(it.group(1))
+        "(?<${it.group(1)}>[^/]+)"
+    }
+    return RulePattern(
+            pattern = Pattern.compile("^$patched$"),
+            groups = groups
+    )
+}
+
+fun match(rulePattern: RulePattern, uri: String): Map<String, Any>? {
+    val matcher = rulePattern.pattern.matcher(uri)
+    if (!matcher.matches()) {
+        return null
+    }
+    return rulePattern.groups
+            .map {  it to matcher.group(it) }
+            .toMap()
 }
 
 public class HandlerChain(val rule: String, val app: KlaskApp, val child: HandlerChain?, val invoke: () -> Response)
