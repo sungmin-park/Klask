@@ -18,6 +18,10 @@ object app : Klask() {
     Route("/post/<name>")
     fun postShow() {
     }
+
+    Route("/article/<id:Int>")
+    fun articleShow() {
+    }
 }
 
 class RouterTest {
@@ -60,6 +64,13 @@ class RouterParseTest {
                         ),
                         uri = "/post/post-name"
                 )
+        )
+    }
+
+    Test
+    fun testInt() {
+        Assert.assertEquals(
+                ParseResult(mapOf("id" to 1234)), parse(rule = "/post/<id:int>", uri = "/post/1234")
         )
     }
 }

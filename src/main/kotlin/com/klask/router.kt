@@ -45,6 +45,10 @@ data class RulePattern(val pattern: Pattern, val groups: List<String>) {
     }
 }
 
+abstract data class GroupHandler(val name: String) {
+    abstract fun translate(): Any;
+}
+
 fun parse(rule: String, uri: String): ParseResult? {
     val rulePattern = compile(rule)
     val matched = match(rulePattern = rulePattern, uri = uri)
