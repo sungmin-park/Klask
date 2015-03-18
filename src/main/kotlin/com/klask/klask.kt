@@ -22,7 +22,7 @@ abstract class Response {
     abstract fun write(writer: Writer)
 }
 
-class StringResponse(val content: String): Response() {
+class StringResponse(val content: String) : Response() {
     override fun write(writer: Writer) {
         writer.write(content)
     }
@@ -66,12 +66,18 @@ open class Klask : KlaskApp() {
         if (method == RequestMethod.POST) {
             throw NotImplementedException()
         }
-        val handler = router.findHandlerChain(req.getRequestURI().toString())
+        val handler = router.findHandler(req.getRequestURI().toString())
         if (handler == null) {
             resp.sendError(HttpServletResponse.SC_NOT_FOUND)
             return
         }
-        val response = handler.invoke()
+        val result = handler.method.invoke(handler.appChain.last())
+        [suppress("USELESS_CAST_STATIC_ASSERT_IS_FINE")]
+        val response = when (result) {
+            is Response -> result as Response
+            is String -> StringResponse(content = result)
+            else -> throw IllegalArgumentException()
+        }
         resp.setStatus(HttpServletResponse.SC_OK)
         val writer = resp.getWriter()
         response.write(writer)

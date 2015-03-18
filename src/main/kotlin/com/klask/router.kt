@@ -9,6 +9,7 @@ import com.klask.Response
 import java.lang.invoke.WrongMethodTypeException
 import com.klask.StringResponse
 import java.util.regex.Pattern
+import java.lang.reflect.Method
 
 Retention(RetentionPolicy.RUNTIME)
 Target(ElementType.METHOD)
@@ -20,22 +21,14 @@ annotation class Routes(vararg val routes: Route)
 
 
 public class Router(val app: KlaskApp) {
-    fun findHandlerChain(requestURI: String, urlPrefix: String = ""): HandlerChain? {
-        val method = app.javaClass.getMethods()
+    fun findHandler(requestURI: String): Handler? {
+        val methodPairs = app.javaClass.getMethods()
                 .map { it to it.getAnnotation(javaClass<Route>()) }
                 .filter { it.second != null }
-                .sortBy { it.second.rule }
-                .firstOrNull {
-                    requestURI == urlPrefix + it.second.rule
-                }
-        if (method != null) {
-            return HandlerChain(app = app, rule = method.second.rule, child = null) {
-                val res = method.first.invoke(app)
-                when (res) {
-                    is Response -> res
-                    is String -> StringResponse(content = res)
-                    else -> throw WrongMethodTypeException()
-                }
+        for ((method, route) in methodPairs) {
+            val parseResult = parse(rule = route.rule, uri = requestURI)
+            if (parseResult != null) {
+                return Handler(appChain = listOf(app), method = method, route = route, parseResult = parseResult)
             }
         }
         return null
@@ -79,8 +72,8 @@ fun match(rulePattern: RulePattern, uri: String): Map<String, Any>? {
         return null
     }
     return rulePattern.groups
-            .map {  it to matcher.group(it) }
+            .map { it to matcher.group(it) }
             .toMap()
 }
 
-public class HandlerChain(val rule: String, val app: KlaskApp, val child: HandlerChain?, val invoke: () -> Response)
+public data class Handler(val appChain: List<KlaskApp>, val method: Method, val route: Route, val parseResult: ParseResult?)
