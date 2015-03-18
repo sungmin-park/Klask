@@ -44,10 +44,7 @@ class RouterParseTest {
     Test
     fun testCompile() {
         Assert.assertEquals(
-                RulePattern(
-                        pattern = Pattern.compile("^/post/(?<name>[^/]+)$"),
-                        groups = listOf("name")
-                ),
+                RulePattern(pattern = Pattern.compile("^/post/(?<name>[^/]+)$"), groups = listOf("name")),
                 compile("/post/<name>")
         )
     }
@@ -58,8 +55,7 @@ class RouterParseTest {
                 mapOf("name" to "post-name"),
                 match(
                         rulePattern = RulePattern(
-                                pattern =  Pattern.compile("^/post/(?<name>[^/]+)$"),
-                                groups = listOf("name")
+                                pattern = Pattern.compile("^/post/(?<name>[^/]+)$"), groups = listOf("name")
                         ),
                         uri = "/post/post-name"
                 )
