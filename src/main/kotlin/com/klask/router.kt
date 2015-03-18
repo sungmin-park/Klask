@@ -5,9 +5,6 @@ import java.lang.annotation.RetentionPolicy
 import com.klask.KlaskApp
 import java.lang.annotation.ElementType
 import java.lang.annotation.Target
-import com.klask.Response
-import java.lang.invoke.WrongMethodTypeException
-import com.klask.StringResponse
 import java.util.regex.Pattern
 import java.lang.reflect.Method
 
@@ -36,7 +33,7 @@ public class Router(val app: KlaskApp) {
 }
 
 data class ParseResult(val pathVariables: Map<String, Any>)
-data class RulePattern(val pattern: Pattern, val groups: List<String>) {
+data class RulePattern(val pattern: Pattern, val groups: List<GroupHandler>) {
     override fun equals(other: Any?): Boolean {
         if (other !is RulePattern) {
             return false
@@ -46,7 +43,43 @@ data class RulePattern(val pattern: Pattern, val groups: List<String>) {
 }
 
 abstract data class GroupHandler(val name: String) {
-    abstract fun translate(): Any;
+    abstract val pattern: String
+    abstract fun translate(value: String): Any;
+
+    class object {
+        val handlers = mapOf(
+                "string" to ::StringGroupHandler, "int" to ::IntGroupHandler
+        )
+
+        fun invoke(group: String): GroupHandler {
+            val groups = group.split(":", 2)
+            val name = groups.first()
+            val type = if (groups.size() == 2) groups[1] else "string"
+            val handlerConstructor = handlers[type]
+            if (handlerConstructor == null) {
+                throw IllegalArgumentException(type)
+            }
+            return handlerConstructor(name)
+        }
+    }
+}
+
+class StringGroupHandler(name: String) : GroupHandler(name = name) {
+    override val pattern: String
+        get() = "(?<${name}>[^/]+)"
+
+    override fun translate(value: String): Any {
+        return value
+    }
+}
+
+class IntGroupHandler(name: String) : GroupHandler(name = name) {
+    override val pattern: String
+        get() = "(?<${name}>[0-9]|[1-9][0-9]+)"
+
+    override fun translate(value: String): Any {
+        return value.toInt()
+    }
 }
 
 fun parse(rule: String, uri: String): ParseResult? {
@@ -59,10 +92,11 @@ fun parse(rule: String, uri: String): ParseResult? {
 }
 
 fun compile(rule: String): RulePattern {
-    val groups = arrayListOf<String>()
+    val groups = arrayListOf<GroupHandler>()
     val patched = rule.replaceAll("<([^>]+)>") {
-        groups.add(it.group(1))
-        "(?<${it.group(1)}>[^/]+)"
+        val groupHandler = GroupHandler(group = it.group(1))
+        groups.add(groupHandler)
+        groupHandler.pattern
     }
     return RulePattern(
             pattern = Pattern.compile("^$patched$"),
@@ -76,7 +110,7 @@ fun match(rulePattern: RulePattern, uri: String): Map<String, Any>? {
         return null
     }
     return rulePattern.groups
-            .map { it to matcher.group(it) }
+            .map { it.name to it.translate(matcher.group(it.name)) }
             .toMap()
 }
 

@@ -19,7 +19,7 @@ object app : Klask() {
     fun postShow() {
     }
 
-    Route("/article/<id:Int>")
+    Route("/article/<id:int>")
     fun articleShow() {
     }
 }
@@ -48,9 +48,12 @@ class RouterParseTest {
 
     Test
     fun testCompile() {
+        val rulePattern = compile("/post/<name>")
         Assert.assertEquals(
-                RulePattern(pattern = Pattern.compile("^/post/(?<name>[^/]+)$"), groups = listOf("name")),
-                compile("/post/<name>")
+                "^/post/(?<name>[^/]+)$", rulePattern.pattern.pattern()
+        )
+        Assert.assertEquals(
+                listOf("name"), rulePattern.groups.map { it.name }
         )
     }
 
@@ -58,12 +61,7 @@ class RouterParseTest {
     fun testMatch() {
         Assert.assertEquals(
                 mapOf("name" to "post-name"),
-                match(
-                        rulePattern = RulePattern(
-                                pattern = Pattern.compile("^/post/(?<name>[^/]+)$"), groups = listOf("name")
-                        ),
-                        uri = "/post/post-name"
-                )
+                match(rulePattern = compile(rule = "/post/<name>"), uri = "/post/post-name")
         )
     }
 
