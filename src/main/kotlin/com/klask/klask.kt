@@ -84,7 +84,14 @@ open class Klask : KlaskApp() {
 
     fun processRequest(req: HttpServletRequest, resp: HttpServletResponse, method: RequestMethod): Response {
         val handler = router.findHandler(req.getRequestURI().toString())
-        val result = handler?.method?.invoke(handler?.appChain?.last()) ?: EmptyResponse(HttpServletResponse.SC_OK)
+        val result: Any =
+                if (handler == null) {
+                    EmptyResponse(HttpServletResponse.SC_NOT_FOUND)
+                }
+                else {
+                    handler.method.invoke(handler.appChain.last()) ?:
+                            EmptyResponse(HttpServletResponse.SC_OK)
+                }
         val response: Response = when (result) {
             is Response -> result
             is String -> StringResponse(content = result)
