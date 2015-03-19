@@ -105,7 +105,7 @@ class ClientHttpServletResponse : HttpServletResponse {
     }
 
     override fun sendError(sc: Int) {
-        throw UnsupportedOperationException()
+        setStatus(sc)
     }
 
     override fun sendRedirect(location: String?) {

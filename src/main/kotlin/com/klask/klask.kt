@@ -13,11 +13,17 @@ import com.klask.jetty.KlaskServerListener
 import java.io.Writer
 import com.klask.client.Client
 import ko.html.Element
+import com.klask.blueprint.Blueprint
 
 enum class RequestMethod {GET POST }
 
 abstract class KlaskApp {
-    val router = Router(this)
+    val router: Router = Router(this)
+    private val blueprints = arrayListOf<Blueprint>()
+
+    fun addBlueprints(vararg blueprints: Blueprint) {
+        this.blueprints.addAll(blueprints)
+    }
 }
 
 abstract class Response(public val statusCode: Int) {
@@ -87,8 +93,7 @@ open class Klask : KlaskApp() {
         val result: Any =
                 if (handler == null) {
                     EmptyResponse(HttpServletResponse.SC_NOT_FOUND)
-                }
-                else {
+                } else {
                     handler.method.invoke(handler.appChain.last()) ?:
                             EmptyResponse(HttpServletResponse.SC_OK)
                 }
@@ -101,7 +106,7 @@ open class Klask : KlaskApp() {
         when (response.statusCode) {
             HttpServletResponse.SC_OK -> resp.setStatus(response.statusCode)
             else ->
-                    resp.sendError(response.statusCode)
+                resp.sendError(response.statusCode)
         }
         resp.setStatus(response.statusCode)
         if (!resp.isCommitted()) {
