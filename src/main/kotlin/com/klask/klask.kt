@@ -12,6 +12,7 @@ import com.klask.servlet.KlaskHttpServlet
 import com.klask.jetty.KlaskServerListener
 import java.io.Writer
 import com.klask.client.Client
+import ko.html.Element
 
 enum class RequestMethod {GET POST }
 
@@ -39,6 +40,16 @@ class StringResponse(private val content: String, statusCode: Int = HttpServletR
 
     override fun write(writer: Writer) {
         writer.write(content)
+    }
+}
+
+class ElementResponse(private val element: Element, statusCode: Int = HttpServletResponse.SC_OK) :
+        Response(statusCode = statusCode) {
+    override val data: String
+        get() = element.toString()
+
+    override fun write(writer: Writer) {
+        element.render(writer)
     }
 }
 
@@ -77,6 +88,7 @@ open class Klask : KlaskApp() {
         val response: Response = when (result) {
             is Response -> result
             is String -> StringResponse(content = result)
+            is Element -> ElementResponse(element = result)
             else -> throw IllegalArgumentException()
         }
         resp.setStatus(response.statusCode)

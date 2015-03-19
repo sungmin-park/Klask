@@ -4,6 +4,7 @@ import org.junit.Test
 import com.klask.Klask
 import com.klask.router.Route
 import org.junit.Assert
+import ko.html.Html
 
 object app : Klask() {
     Route("/")
@@ -13,6 +14,15 @@ object app : Klask() {
 
     Route("/unit")
     fun unit() {
+    }
+
+    Route("/html")
+    fun html(): Html {
+        return Html {
+            body {
+                h1(text = "html")
+            }
+        }
     }
 }
 
@@ -25,5 +35,10 @@ class ResponseTest {
     Test
     fun testUnitResponse() {
         Assert.assertEquals("", app.client.get("/unit").data)
+    }
+
+    Test
+    fun testHtml() {
+        Assert.assertEquals("<!DOCTYPE html><html><body><h1>html</h1></body></html>", app.client.get("/html").data)
     }
 }
