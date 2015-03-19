@@ -10,7 +10,7 @@ import java.lang.reflect.Method
 
 Retention(RetentionPolicy.RUNTIME)
 Target(ElementType.METHOD)
-annotation class Route(val rule: String)
+annotation class Route(val value: String)
 
 Retention(RetentionPolicy.RUNTIME)
 Target(ElementType.METHOD)
@@ -23,7 +23,7 @@ public class Router(val app: KlaskApp) {
                 .map { it to it.getAnnotation(javaClass<Route>()) }
                 .filter { it.second != null }
         for ((method, route) in methodPairs) {
-            val parseResult = parse(rule = route.rule, uri = requestURI)
+            val parseResult = parse(rule = route.value, uri = requestURI)
             if (parseResult != null) {
                 return Handler(appChain = listOf(app), method = method, route = route, parseResult = parseResult)
             }

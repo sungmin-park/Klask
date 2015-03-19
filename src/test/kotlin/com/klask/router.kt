@@ -27,14 +27,14 @@ object app : Klask() {
 class RouterTest {
     Test
     fun testExactMatch() {
-        Assert.assertEquals("/", app.router.findHandler("/")?.route?.rule)
+        Assert.assertEquals("/", app.router.findHandler("/")?.route?.value)
         Assert.assertEquals(null, app.router.findHandler("/not-exist-url"))
     }
 
     Test
     fun testStringPathVariable() {
         val chain = app.router.findHandler("/post/post name")
-        Assert.assertEquals("/post/<name>", chain?.route?.rule)
+        Assert.assertEquals("/post/<name>", chain?.route?.value)
         Assert.assertEquals("post name", chain?.parseResult?.pathVariables?.get("name"))
     }
 }
