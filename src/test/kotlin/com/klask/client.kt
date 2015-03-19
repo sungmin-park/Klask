@@ -13,6 +13,11 @@ object app : Klask() {
     fun index(): String {
         return "index"
     }
+
+    Route("/get")
+    fun get(): String {
+        return "get"
+    }
 }
 
 class ClientTest {
@@ -25,8 +30,8 @@ class ClientTest {
 
     Test
     fun testGet() {
-        val res = app.client.get("/")
+        val res = app.client.get("/get")
         Assert.assertEquals(HttpServletResponse.SC_OK, res.statusCode)
-        Assert.assertEquals("index", res.data)
+        Assert.assertEquals("get", res.data)
     }
 }

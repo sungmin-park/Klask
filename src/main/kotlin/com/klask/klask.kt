@@ -73,13 +73,9 @@ open class Klask : KlaskApp() {
 
     fun processRequest(req: HttpServletRequest, resp: HttpServletResponse, method: RequestMethod): Response {
         val handler = router.findHandler(req.getRequestURI().toString())
-        if (handler == null) {
-            return EmptyResponse(HttpServletResponse.SC_NOT_FOUND)
-        }
-        val result = handler.method.invoke(handler.appChain.last())
-        [suppress("USELESS_CAST_STATIC_ASSERT_IS_FINE")]
-        val response = when (result) {
-            is Response -> result as Response
+        val result = handler?.method?.invoke(handler?.appChain?.last()) ?: EmptyResponse(HttpServletResponse.SC_OK)
+        val response: Response = when (result) {
+            is Response -> result
             is String -> StringResponse(content = result)
             else -> throw IllegalArgumentException()
         }
