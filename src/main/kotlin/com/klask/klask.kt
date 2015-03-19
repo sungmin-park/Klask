@@ -98,6 +98,11 @@ open class Klask : KlaskApp() {
             is Element -> ElementResponse(element = result)
             else -> throw IllegalArgumentException()
         }
+        when (response.statusCode) {
+            HttpServletResponse.SC_OK -> resp.setStatus(response.statusCode)
+            else ->
+                    resp.sendError(response.statusCode)
+        }
         resp.setStatus(response.statusCode)
         resp.getWriter().use { response.write(it) }
         return response
