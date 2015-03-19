@@ -61,7 +61,7 @@ class ClientHttpServletResponse : HttpServletResponse {
     }
 
     override fun isCommitted(): Boolean {
-        throw UnsupportedOperationException()
+        return false;
     }
 
     override fun reset() {

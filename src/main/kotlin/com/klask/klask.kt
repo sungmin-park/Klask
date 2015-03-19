@@ -104,7 +104,9 @@ open class Klask : KlaskApp() {
                     resp.sendError(response.statusCode)
         }
         resp.setStatus(response.statusCode)
-        resp.getWriter().use { response.write(it) }
+        if (!resp.isCommitted()) {
+            resp.getWriter().use { response.write(it) }
+        }
         return response
     }
 
