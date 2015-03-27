@@ -46,7 +46,7 @@ abstract data class GroupHandler(val name: String) {
     abstract val pattern: String
     abstract fun translate(value: String): Any;
 
-    class object {
+    companion object {
         val handlers = mapOf(
                 "string" to ::StringGroupHandler, "int" to ::IntGroupHandler
         )

@@ -21,7 +21,7 @@ import javax.servlet.http.HttpUpgradeHandler
 
 class ClientHttpServletRequest(val requestUrl: String) : HttpServletRequest {
     val url: URL
-    {
+    init {
         val prefix = if (requestUrl.startsWith("http://")) "" else "http://localhost:5000"
         url = URL(prefix + requestUrl)
     }

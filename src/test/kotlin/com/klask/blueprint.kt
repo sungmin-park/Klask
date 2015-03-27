@@ -13,7 +13,7 @@ object user : Blueprint() {
 }
 
 object admin : Blueprint() {
-    {
+    init {
         addBlueprints(user)
     }
 }
@@ -33,13 +33,13 @@ object dashBoard : Blueprint() {
 }
 
 object front : Blueprint() {
-    {
+    init {
         addBlueprints(dashBoard, article)
     }
 }
 
 object app : Klask() {
-    {
+    init {
         addBlueprints(front, admin)
     }
 
