@@ -21,7 +21,7 @@ abstract class KlaskApp {
     val router: Router = Router(this)
     private val blueprints = arrayListOf<Blueprint>()
 
-    fun addBlueprints(vararg blueprints: Blueprint) {
+    public fun addBlueprints(vararg blueprints: Blueprint) {
         this.blueprints.addAll(blueprints)
     }
 }
