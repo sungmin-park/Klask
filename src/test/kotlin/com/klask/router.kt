@@ -1,14 +1,8 @@
 package com.klask
 
-import org.junit.Test
-import com.klask.router.Route
+import com.klask.router.*
 import org.junit.Assert
-import com.klask.router.parse
-import com.klask.router.ParseResult
-import com.klask.router.compile
-import java.util.regex.Pattern
-import com.klask.router.match
-import com.klask.router.RulePattern
+import org.junit.Test
 
 object app : Klask() {
     Route("/")
@@ -22,6 +16,10 @@ object app : Klask() {
     Route("/article/<id:int>")
     fun articleShow() {
     }
+
+    Route("/article/images/<path:path>")
+    fun articleImage() {
+    }
 }
 
 class RouterTest {
@@ -32,10 +30,16 @@ class RouterTest {
     }
 
     Test
-    fun testStringPathVariable() {
+    fun testStringVariable() {
         val chain = app.router.findHandler("/post/post name")
         Assert.assertEquals("/post/<name>", chain?.route?.value)
         Assert.assertEquals("post name", chain?.parseResult?.pathVariables?.get("name"))
+    }
+
+    Test
+    fun testPathVariable() {
+        val handler = app.router.findHandler("/article/images/nested-path/image-name.jpg")
+        Assert.assertEquals("nested-path/image-name.jpg", handler?.parseResult?.pathVariables?.get("path"))
     }
 }
 
@@ -69,6 +73,13 @@ class RouterParseTest {
     fun testInt() {
         Assert.assertEquals(
                 ParseResult(mapOf("id" to 1234)), parse(rule = "/post/<id:int>", uri = "/post/1234")
+        )
+    }
+
+    Test
+    fun testPath() {
+        Assert.assertEquals(
+                ParseResult(mapOf("path" to "nested-path/image-name.jpg")), parse(rule = "/article/images/<path:path>", uri = "/article/images/nested-path/image-name.jpg")
         )
     }
 }

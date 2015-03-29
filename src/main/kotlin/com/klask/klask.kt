@@ -4,6 +4,7 @@ import com.klask.blueprint.Blueprint
 import com.klask.blueprint.BlueprintJar
 import com.klask.client.Client
 import com.klask.jetty.KlaskServerListener
+import com.klask.router.Route
 import com.klask.router.Router
 import com.klask.servlet.KlaskHttpServlet
 import ko.html.Element
@@ -113,7 +114,6 @@ open class Klask : KlaskApp() {
                 else ->
                     resp.sendError(response.statusCode)
             }
-            resp.setStatus(response.statusCode)
             if (!resp.isCommitted()) {
                 resp.getWriter().use { response.write(it) }
             }
@@ -138,5 +138,9 @@ open class Klask : KlaskApp() {
             throw NotImplementedException()
         }
         processRequest(req = req, resp = resp, method = method)
+    }
+
+    Route("/static")
+    fun static() {
     }
 }

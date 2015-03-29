@@ -56,7 +56,8 @@ abstract data class GroupHandler(val name: String) {
 
     companion object {
         val handlers = mapOf(
-                "string" to ::StringGroupHandler, "int" to ::IntGroupHandler
+                "string" to ::StringGroupHandler, "int" to ::IntGroupHandler,
+                "path" to ::PathHandler
         )
 
         fun invoke(group: String): GroupHandler {
@@ -72,7 +73,7 @@ abstract data class GroupHandler(val name: String) {
     }
 }
 
-class StringGroupHandler(name: String) : GroupHandler(name = name) {
+open class StringGroupHandler(name: String) : GroupHandler(name = name) {
     override val pattern: String
         get() = "(?<${name}>[^/]+)"
 
@@ -88,6 +89,11 @@ class IntGroupHandler(name: String) : GroupHandler(name = name) {
     override fun translate(value: String): Any {
         return value.toInt()
     }
+}
+
+class PathHandler(name: String): StringGroupHandler(name = name) {
+    override val pattern: String
+        get() = "(?<${name}>.+)"
 }
 
 fun parse(rule: String, uri: String): ParseResult? {
