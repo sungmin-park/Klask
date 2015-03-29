@@ -25,6 +25,9 @@ abstract class KlaskApp {
     protected fun addBlueprint(front: Blueprint, urlPrefix: String = "") {
         blueprintJars.add(BlueprintJar(front, urlPrefix))
     }
+
+    open fun onTearDownRequest() {
+    }
 }
 
 abstract class Response(public val statusCode: Int) {
@@ -76,7 +79,7 @@ open class Klask : KlaskApp() {
         server.addLifeCycleListener(serverListener)
         server.start()
         if (!onBackground) {
-            server.join()
+            join()
         }
     }
 
@@ -91,29 +94,37 @@ open class Klask : KlaskApp() {
 
     fun processRequest(req: HttpServletRequest, resp: HttpServletResponse, method: RequestMethod): Response {
         val handler = router.findHandler(req.getRequestURI().toString())
-        val result: Any =
-                if (handler == null) {
-                    EmptyResponse(HttpServletResponse.SC_NOT_FOUND)
-                } else {
-                    handler.method.invoke(handler.appChain.last()) ?:
-                            EmptyResponse(HttpServletResponse.SC_OK)
+        try {
+            val result: Any =
+                    if (handler == null) {
+                        EmptyResponse(HttpServletResponse.SC_NOT_FOUND)
+                    } else {
+                        handler.method.invoke(handler.appChain.first()) ?:
+                                EmptyResponse(HttpServletResponse.SC_OK)
+                    }
+            val response: Response = when (result) {
+                is Response -> result
+                is String -> StringResponse(content = result)
+                is Element -> ElementResponse(element = result)
+                else -> throw IllegalArgumentException()
+            }
+            when (response.statusCode) {
+                HttpServletResponse.SC_OK -> resp.setStatus(response.statusCode)
+                else ->
+                    resp.sendError(response.statusCode)
+            }
+            resp.setStatus(response.statusCode)
+            if (!resp.isCommitted()) {
+                resp.getWriter().use { response.write(it) }
+            }
+            return response
+        } finally {
+            if (handler != null) {
+                handler.appChain.forEach {
+                    it.onTearDownRequest()
                 }
-        val response: Response = when (result) {
-            is Response -> result
-            is String -> StringResponse(content = result)
-            is Element -> ElementResponse(element = result)
-            else -> throw IllegalArgumentException()
+            }
         }
-        when (response.statusCode) {
-            HttpServletResponse.SC_OK -> resp.setStatus(response.statusCode)
-            else ->
-                resp.sendError(response.statusCode)
-        }
-        resp.setStatus(response.statusCode)
-        if (!resp.isCommitted()) {
-            resp.getWriter().use { response.write(it) }
-        }
-        return response
     }
 
     fun doRequest(req: HttpServletRequest?, resp: HttpServletResponse?, method: RequestMethod) {
@@ -127,9 +138,5 @@ open class Klask : KlaskApp() {
             throw NotImplementedException()
         }
         processRequest(req = req, resp = resp, method = method)
-    }
-
-    fun addOnServerReady(listener: (app: Klask) -> Unit) {
-        serverReadyListeners.add(listener)
     }
 }

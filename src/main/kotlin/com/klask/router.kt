@@ -7,6 +7,7 @@ import java.lang.annotation.ElementType
 import java.lang.annotation.Target
 import java.util.regex.Pattern
 import java.lang.reflect.Method
+import java.util.ArrayList
 
 Retention(RetentionPolicy.RUNTIME)
 Target(ElementType.METHOD)
@@ -25,12 +26,13 @@ public class Router(val app: KlaskApp) {
         for ((method, route) in methodPairs) {
             val parseResult = parse(rule = urlPrefix + route.value, uri = requestURI)
             if (parseResult != null) {
-                return Handler(appChain = listOf(app), method = method, route = route, parseResult = parseResult)
+                return Handler(appChain = arrayListOf(app), method = method, route = route, parseResult = parseResult)
             }
         }
         for (blueprintJar in app.blueprintJars) {
             val handler = blueprintJar.blueprint.router.findHandler(requestURI, urlPrefix + blueprintJar.urlPrefix)
             if (handler != null) {
+                handler.appChain.add(app)
                 return handler
             }
         }
@@ -120,4 +122,4 @@ fun match(rulePattern: RulePattern, uri: String): Map<String, Any>? {
             .toMap()
 }
 
-public data class Handler(val appChain: List<KlaskApp>, val method: Method, val route: Route, val parseResult: ParseResult?)
+public data class Handler(val appChain: ArrayList<KlaskApp>, val method: Method, val route: Route, val parseResult: ParseResult?)
