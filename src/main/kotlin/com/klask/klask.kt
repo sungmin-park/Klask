@@ -1,28 +1,29 @@
 package com.klask
 
+import com.klask.blueprint.Blueprint
+import com.klask.blueprint.BlueprintJar
+import com.klask.client.Client
+import com.klask.jetty.KlaskServerListener
+import com.klask.router.Router
+import com.klask.servlet.KlaskHttpServlet
+import ko.html.Element
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.servlet.ServletHandler
 import org.eclipse.jetty.servlet.ServletHolder
+import sun.reflect.generics.reflectiveObjects.NotImplementedException
+import java.io.Writer
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import kotlin.properties.Delegates
-import sun.reflect.generics.reflectiveObjects.NotImplementedException
-import com.klask.router.Router
-import com.klask.servlet.KlaskHttpServlet
-import com.klask.jetty.KlaskServerListener
-import java.io.Writer
-import com.klask.client.Client
-import ko.html.Element
-import com.klask.blueprint.Blueprint
 
 enum class RequestMethod {GET POST }
 
 abstract class KlaskApp {
     val router: Router = Router(this)
-    private val blueprints = arrayListOf<Blueprint>()
+    val blueprintJars = arrayListOf<BlueprintJar>()
 
-    public fun addBlueprints(vararg blueprints: Blueprint) {
-        this.blueprints.addAll(blueprints)
+    protected fun addBlueprint(front: Blueprint, urlPrefix: String = "") {
+        blueprintJars.add(BlueprintJar(front, urlPrefix))
     }
 }
 

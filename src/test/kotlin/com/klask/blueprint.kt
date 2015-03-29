@@ -2,8 +2,8 @@ package com.klask.blueprint
 
 import com.klask.Klask
 import com.klask.router.Route
-import org.junit.Test
 import org.junit.Assert
+import org.junit.Test
 
 object user : Blueprint() {
     Route("/")
@@ -14,7 +14,7 @@ object user : Blueprint() {
 
 object admin : Blueprint() {
     init {
-        addBlueprints(user)
+        addBlueprint(user, "/user")
     }
 }
 
@@ -34,13 +34,15 @@ object dashBoard : Blueprint() {
 
 object front : Blueprint() {
     init {
-        addBlueprints(dashBoard, article)
+        addBlueprint(dashBoard)
+        addBlueprint(article, urlPrefix = "/article")
     }
 }
 
 object app : Klask() {
     init {
-        addBlueprints(front, admin)
+        addBlueprint(front, urlPrefix = "/front")
+        addBlueprint(admin, urlPrefix = "/admin")
     }
 
     Route("/")
@@ -54,6 +56,6 @@ class BlueprintTest {
     Test
     fun testNestedRoute() {
         Assert.assertEquals("index", app.client.get("/").data)
-        Assert.assertEquals("dashboard.index", app.client.get("/dashBoard/").data)
+        Assert.assertEquals("dashBoard.index", app.client.get("/front/").data)
     }
 }

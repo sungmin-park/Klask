@@ -18,14 +18,20 @@ annotation class Routes(vararg val routes: Route)
 
 
 public class Router(val app: KlaskApp) {
-    fun findHandler(requestURI: String): Handler? {
+    fun findHandler(requestURI: String, urlPrefix: String = ""): Handler? {
         val methodPairs = app.javaClass.getMethods()
                 .map { it to it.getAnnotation(javaClass<Route>()) }
                 .filter { it.second != null }
         for ((method, route) in methodPairs) {
-            val parseResult = parse(rule = route.value, uri = requestURI)
+            val parseResult = parse(rule = urlPrefix + route.value, uri = requestURI)
             if (parseResult != null) {
                 return Handler(appChain = listOf(app), method = method, route = route, parseResult = parseResult)
+            }
+        }
+        for (blueprintJar in app.blueprintJars) {
+            val handler = blueprintJar.blueprint.router.findHandler(requestURI, urlPrefix + blueprintJar.urlPrefix)
+            if (handler != null) {
+                return handler
             }
         }
         return null
