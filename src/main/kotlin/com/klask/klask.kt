@@ -3,12 +3,13 @@ package com.klask
 import com.klask.blueprint.Blueprint
 import com.klask.blueprint.BlueprintJar
 import com.klask.client.Client
+import com.klask.jetty.JettyServer
 import com.klask.jetty.KlaskServerListener
 import com.klask.router.Route
 import com.klask.router.Router
 import com.klask.servlet.KlaskHttpServlet
 import ko.html.Element
-import org.eclipse.jetty.server.Server
+import org.eclipse.jetty.servlet.DefaultServlet
 import org.eclipse.jetty.servlet.ServletHandler
 import org.eclipse.jetty.servlet.ServletHolder
 import org.springframework.core.DefaultParameterNameDiscoverer
@@ -67,7 +68,7 @@ class ElementResponse(private val element: Element, statusCode: Int = HttpServle
 }
 
 open class Klask : KlaskApp() {
-    private var server: Server by Delegates.notNull()
+    public var server: JettyServer by Delegates.notNull()
     private val servlet = KlaskHttpServlet(this)
     public val client: Client = Client(this)
     public val staticPath: File
@@ -81,10 +82,13 @@ open class Klask : KlaskApp() {
 
 
     public fun run(port: Int = 8080, onBackground: Boolean = false) {
-        server = Server(port)
-        val handler = ServletHandler()
-        handler.addServletWithMapping(ServletHolder(servlet), "/*")
-        server.setHandler(handler)
+        server = JettyServer(port)
+
+        val appHandler = ServletHandler()
+//        appHandler.addServletWithMapping(javaClass<DefaultServlet>(), "/*")
+        appHandler.addServletWithMapping(ServletHolder(servlet), "/*")
+
+        server.setHandler(appHandler)
         server.addLifeCycleListener(serverListener)
         server.start()
         if (!onBackground) {
@@ -153,7 +157,7 @@ open class Klask : KlaskApp() {
     }
 
     Route("/static/<fileName:path>")
-    fun static(fileName: String): String {
-        return File(staticPath, fileName).readLines().join("\n")
+    open fun static(fileName: String): String {
+        return File(staticPath, fileName).readText()
     }
 }

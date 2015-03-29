@@ -1,17 +1,21 @@
 package com.klask.server
 
-import org.junit.Test
 import com.klask.Klask
-import java.net.URL
+import com.klask.router.Route
+import org.junit.After
 import org.junit.Assert
 import org.junit.Before
-import org.junit.After
-import com.klask.router.Route
+import org.junit.Test
 
 object app : Klask() {
     Route("/")
     fun index(): String {
         return "index"
+    }
+
+    Route("/static/<fileName:path>")
+    override fun static(fileName: String):String {
+        throw IllegalArgumentException(fileName)
     }
 }
 
@@ -28,8 +32,11 @@ class ServerTest {
 
     Test
     fun testRun() {
-        Assert.assertEquals(
-                "index", URL("http://localhost:8080").openConnection().getInputStream().reader("UTF-8").readText()
-        )
+        Assert.assertEquals("index", app.server.get("/"))
+    }
+
+    Test
+    fun testStatic() {
+        Assert.assertEquals("welcome", app.server.get("/static/welcome.txt"))
     }
 }
