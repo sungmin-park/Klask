@@ -11,7 +11,9 @@ import ko.html.Element
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.servlet.ServletHandler
 import org.eclipse.jetty.servlet.ServletHolder
+import org.springframework.core.DefaultParameterNameDiscoverer
 import sun.reflect.generics.reflectiveObjects.NotImplementedException
+import java.io.File
 import java.io.Writer
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -68,9 +70,15 @@ open class Klask : KlaskApp() {
     private var server: Server by Delegates.notNull()
     private val servlet = KlaskHttpServlet(this)
     public val client: Client = Client(this)
+    public val staticPath: File
 
     private val serverReadyListeners = arrayListOf<(app: Klask) -> Unit>()
     private val serverListener = KlaskServerListener(this, serverReadyListeners);
+
+    init {
+        staticPath = File(javaClass.getResource("/static").getPath())
+    }
+
 
     public fun run(port: Int = 8080, onBackground: Boolean = false) {
         server = Server(port)
@@ -100,8 +108,12 @@ open class Klask : KlaskApp() {
                     if (handler == null) {
                         EmptyResponse(HttpServletResponse.SC_NOT_FOUND)
                     } else {
-                        handler.method.invoke(handler.appChain.first()) ?:
-                                EmptyResponse(HttpServletResponse.SC_OK)
+                        val defaultParameterNameDiscoverer = DefaultParameterNameDiscoverer()
+                        val args = defaultParameterNameDiscoverer.getParameterNames(handler.method)
+                                .map { handler.parseResult?.pathVariables?.get(it) }
+                                .copyToArray()
+                        val res = handler.method.invoke(handler.appChain.first(), *args)
+                        res ?: EmptyResponse(HttpServletResponse.SC_OK)
                     }
             val response: Response = when (result) {
                 is Response -> result
@@ -140,7 +152,8 @@ open class Klask : KlaskApp() {
         processRequest(req = req, resp = resp, method = method)
     }
 
-    Route("/static")
-    fun static() {
+    Route("/static/<fileName:path>")
+    fun static(fileName: String): String {
+        return File(staticPath, fileName).readLines().join("\n")
     }
 }

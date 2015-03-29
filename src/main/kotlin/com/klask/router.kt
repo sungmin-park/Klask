@@ -123,9 +123,11 @@ fun match(rulePattern: RulePattern, uri: String): Map<String, Any>? {
     if (!matcher.matches()) {
         return null
     }
-    return rulePattern.groups
-            .map { it.name to it.translate(matcher.group(it.name)) }
-            .toMap()
+    val map = linkedMapOf<String, Any>()
+    rulePattern.groups.forEach {
+        map.put(it.name,it.translate(matcher.group(it.name)))
+    }
+    return map
 }
 
 public data class Handler(val appChain: ArrayList<KlaskApp>, val method: Method, val route: Route, val parseResult: ParseResult?)
