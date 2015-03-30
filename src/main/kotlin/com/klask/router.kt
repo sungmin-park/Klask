@@ -1,13 +1,13 @@
 package com.klask.router
 
+import com.klask.Application
+import java.lang.annotation.ElementType
 import java.lang.annotation.Retention
 import java.lang.annotation.RetentionPolicy
-import com.klask.KlaskApp
-import java.lang.annotation.ElementType
 import java.lang.annotation.Target
-import java.util.regex.Pattern
 import java.lang.reflect.Method
 import java.util.ArrayList
+import java.util.regex.Pattern
 
 Retention(RetentionPolicy.RUNTIME)
 Target(ElementType.METHOD)
@@ -18,12 +18,14 @@ Target(ElementType.METHOD)
 annotation class Routes(vararg val routes: Route)
 
 
-public class Router(val app: KlaskApp) {
-    fun findHandler(requestURI: String, urlPrefix: String = ""): Handler? {
-        val methodPairs = app.javaClass.getMethods()
+public class Router(val app: Application) {
+    val routeMethods: List<Pair<Method, Route>>
+        get() = app.javaClass.getMethods()
                 .map { it to it.getAnnotation(javaClass<Route>()) }
                 .filter { it.second != null }
-        for ((method, route) in methodPairs) {
+
+    fun findHandler(requestURI: String, urlPrefix: String = ""): Handler? {
+        for ((method, route) in routeMethods) {
             val parseResult = parse(rule = urlPrefix + route.value, uri = requestURI)
             if (parseResult != null) {
                 return Handler(appChain = arrayListOf(app), method = method, route = route, parseResult = parseResult)
@@ -37,6 +39,19 @@ public class Router(val app: KlaskApp) {
             }
         }
         return null
+    }
+
+    fun findUrl(endpoint: String): String {
+        if ("." in endpoint) {
+            val (name, other) = endpoint.split("[.]", limit = 2)
+            val blueprintJar = app.blueprintJars.first { it.blueprint.name == name }
+            return blueprintJar.urlPrefix + blueprintJar.blueprint.router.findUrl(other)
+        }
+        return routeMethods
+                .first {
+                    it.first.getName().equals(endpoint)
+                }
+                .second.value
     }
 }
 
@@ -91,7 +106,7 @@ class IntGroupHandler(name: String) : GroupHandler(name = name) {
     }
 }
 
-class PathHandler(name: String): StringGroupHandler(name = name) {
+class PathHandler(name: String) : StringGroupHandler(name = name) {
     override val pattern: String
         get() = "(?<${name}>.+)"
 }
@@ -125,9 +140,9 @@ fun match(rulePattern: RulePattern, uri: String): Map<String, Any>? {
     }
     val map = linkedMapOf<String, Any>()
     rulePattern.groups.forEach {
-        map.put(it.name,it.translate(matcher.group(it.name)))
+        map.put(it.name, it.translate(matcher.group(it.name)))
     }
     return map
 }
 
-public data class Handler(val appChain: ArrayList<KlaskApp>, val method: Method, val route: Route, val parseResult: ParseResult?)
+public data class Handler(val appChain: ArrayList<Application>, val method: Method, val route: Route, val parseResult: ParseResult?)

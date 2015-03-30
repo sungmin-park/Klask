@@ -1,5 +1,6 @@
-package com.klask
+package com.klask.router
 
+import com.klask.Klask
 import com.klask.router.*
 import org.junit.Assert
 import org.junit.Test
