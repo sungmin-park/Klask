@@ -12,7 +12,6 @@ import ko.html.Element
 import org.eclipse.jetty.servlet.DefaultServlet
 import org.eclipse.jetty.servlet.ServletContextHandler
 import org.eclipse.jetty.servlet.ServletHolder
-import org.eclipse.jetty.util.Utf8Appendable
 import org.springframework.core.DefaultParameterNameDiscoverer
 import sun.reflect.generics.reflectiveObjects.NotImplementedException
 import java.io.File
@@ -37,7 +36,7 @@ abstract class Application {
     }
 }
 
-abstract class Response(public val statusCode: Int) {
+abstract class Response(public val statusCode: Int, public val contentType: String = "") {
     public abstract val data: String
     abstract fun write(writer: Writer)
 }
@@ -51,7 +50,7 @@ class EmptyResponse(statusCode: Int) : Response(statusCode = statusCode) {
 }
 
 class StringResponse(private val content: String, statusCode: Int = HttpServletResponse.SC_OK) :
-        Response(statusCode = statusCode) {
+        Response(statusCode = statusCode, contentType = "text") {
     override val data: String
         get() = content
 
@@ -61,7 +60,7 @@ class StringResponse(private val content: String, statusCode: Int = HttpServletR
 }
 
 class ElementResponse(private val element: Element, statusCode: Int = HttpServletResponse.SC_OK) :
-        Response(statusCode = statusCode) {
+        Response(statusCode = statusCode, contentType = "text/html") {
     override val data: String
         get() = element.toString()
 
