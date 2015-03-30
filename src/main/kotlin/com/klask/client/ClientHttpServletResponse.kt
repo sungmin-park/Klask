@@ -1,16 +1,16 @@
 package com.klask.client
 
-import javax.servlet.http.HttpServletResponse
-import javax.servlet.ServletOutputStream
+import java.io.ByteArrayOutputStream
 import java.io.PrintWriter
 import java.util.Locale
+import javax.servlet.ServletOutputStream
 import javax.servlet.http.Cookie
+import javax.servlet.http.HttpServletResponse
 import kotlin.properties.Delegates
-import java.io.ByteArrayOutputStream
 
 class ClientHttpServletResponse : HttpServletResponse {
     var statusCode: Int by Delegates.notNull()
-    var charset = ""
+    var charset: String? = null
     var _contentType: String? = null
 
     override fun getCharacterEncoding(): String? {
@@ -31,7 +31,7 @@ class ClientHttpServletResponse : HttpServletResponse {
     }
 
     override fun setCharacterEncoding(charset: String?) {
-        this.charset = charset!!
+        this.charset = charset
     }
 
     override fun setContentLength(len: Int) {

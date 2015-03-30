@@ -36,7 +36,7 @@ abstract class Application {
     }
 }
 
-abstract class Response(public val statusCode: Int, public val contentType: String = "") {
+abstract class Response(public val statusCode: Int, public val contentType: String? = null, val charset: String? = null) {
     public abstract val data: String
     abstract fun write(writer: Writer)
 }
@@ -50,7 +50,7 @@ class EmptyResponse(statusCode: Int) : Response(statusCode = statusCode) {
 }
 
 class StringResponse(private val content: String, statusCode: Int = HttpServletResponse.SC_OK) :
-        Response(statusCode = statusCode, contentType = "text") {
+        Response(statusCode = statusCode, contentType = "text/html", charset = "utf-8") {
     override val data: String
         get() = content
 
@@ -60,7 +60,7 @@ class StringResponse(private val content: String, statusCode: Int = HttpServletR
 }
 
 class ElementResponse(private val element: Element, statusCode: Int = HttpServletResponse.SC_OK) :
-        Response(statusCode = statusCode, contentType = "text/html") {
+        Response(statusCode = statusCode, contentType = "text/html", charset = "utf-8") {
     override val data: String
         get() = element.toString()
 
@@ -136,10 +136,8 @@ open class Klask : Application(), KlaskApp {
                     is Element -> ElementResponse(element = result)
                     else -> throw IllegalArgumentException()
                 }
-                resp.setCharacterEncoding(Charsets.UTF_8.name())
-                if (response.contentType != "") {
-                    resp.setContentType(response.contentType)
-                }
+                resp.setContentType(response.contentType)
+                resp.setCharacterEncoding(response.charset)
                 when (response.statusCode) {
                     HttpServletResponse.SC_OK -> resp.setStatus(response.statusCode)
                     else ->
