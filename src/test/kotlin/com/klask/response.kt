@@ -1,10 +1,11 @@
 package com.klask.response
 
-import org.junit.Test
 import com.klask.Klask
 import com.klask.router.Route
-import org.junit.Assert
+import ko.html.Div
 import ko.html.Html
+import org.junit.Assert
+import org.junit.Test
 
 object app : Klask() {
     Route("/")
@@ -24,6 +25,11 @@ object app : Klask() {
             }
         }
     }
+
+    Route("/korean.html")
+    fun korean(): Div {
+        return Div(text = "한글")
+    }
 }
 
 class ResponseTest {
@@ -39,6 +45,15 @@ class ResponseTest {
 
     Test
     fun testHtml() {
-        Assert.assertEquals("<!DOCTYPE html><html><body><h1>html</h1></body></html>", app.client.get("/html").data)
+        val response = app.client.get("/html")
+        Assert.assertEquals("<!DOCTYPE html><html><body><h1>html</h1></body></html>", response.data)
+    }
+
+    Test
+    fun testKorean() {
+        Assert.assertEquals("<div>한글</div>", app.client.get("/korean.html").data)
+        app.run(onBackground = true)
+        Assert.assertEquals("<div>한글</div>", app.server.get("/korean.html"))
+        app.stop()
     }
 }

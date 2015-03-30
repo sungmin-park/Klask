@@ -10,6 +10,7 @@ import java.io.ByteArrayOutputStream
 
 class ClientHttpServletResponse : HttpServletResponse {
     var statusCode: Int by Delegates.notNull()
+    var charset = ""
 
     override fun getCharacterEncoding(): String? {
         throw UnsupportedOperationException()
@@ -29,7 +30,7 @@ class ClientHttpServletResponse : HttpServletResponse {
     }
 
     override fun setCharacterEncoding(charset: String?) {
-        throw UnsupportedOperationException()
+        this.charset = charset!!
     }
 
     override fun setContentLength(len: Int) {

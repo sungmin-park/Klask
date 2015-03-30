@@ -12,6 +12,7 @@ import ko.html.Element
 import org.eclipse.jetty.servlet.DefaultServlet
 import org.eclipse.jetty.servlet.ServletContextHandler
 import org.eclipse.jetty.servlet.ServletHolder
+import org.eclipse.jetty.util.Utf8Appendable
 import org.springframework.core.DefaultParameterNameDiscoverer
 import sun.reflect.generics.reflectiveObjects.NotImplementedException
 import java.io.File
@@ -136,6 +137,7 @@ open class Klask : Application(), KlaskApp {
                     is Element -> ElementResponse(element = result)
                     else -> throw IllegalArgumentException()
                 }
+                resp.setCharacterEncoding(Charsets.UTF_8.name())
                 when (response.statusCode) {
                     HttpServletResponse.SC_OK -> resp.setStatus(response.statusCode)
                     else ->
