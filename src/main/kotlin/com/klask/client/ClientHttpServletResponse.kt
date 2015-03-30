@@ -11,6 +11,7 @@ import java.io.ByteArrayOutputStream
 class ClientHttpServletResponse : HttpServletResponse {
     var statusCode: Int by Delegates.notNull()
     var charset = ""
+    var _contentType: String? = null
 
     override fun getCharacterEncoding(): String? {
         throw UnsupportedOperationException()
@@ -42,7 +43,7 @@ class ClientHttpServletResponse : HttpServletResponse {
     }
 
     override fun setContentType(type: String?) {
-        throw UnsupportedOperationException()
+        _contentType = type
     }
 
     override fun setBufferSize(size: Int) {

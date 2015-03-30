@@ -137,6 +137,9 @@ open class Klask : Application(), KlaskApp {
                     else -> throw IllegalArgumentException()
                 }
                 resp.setCharacterEncoding(Charsets.UTF_8.name())
+                if (response.contentType != "") {
+                    resp.setContentType(response.contentType)
+                }
                 when (response.statusCode) {
                     HttpServletResponse.SC_OK -> resp.setStatus(response.statusCode)
                     else ->
