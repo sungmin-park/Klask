@@ -10,7 +10,7 @@ import com.klask.router.Router
 import com.klask.servlet.KlaskHttpServlet
 import ko.html.Element
 import org.eclipse.jetty.servlet.DefaultServlet
-import org.eclipse.jetty.servlet.ServletHandler
+import org.eclipse.jetty.servlet.ServletContextHandler
 import org.eclipse.jetty.servlet.ServletHolder
 import org.springframework.core.DefaultParameterNameDiscoverer
 import sun.reflect.generics.reflectiveObjects.NotImplementedException
@@ -84,11 +84,13 @@ open class Klask : KlaskApp() {
     public fun run(port: Int = 8080, onBackground: Boolean = false) {
         server = JettyServer(port)
 
-        val appHandler = ServletHandler()
-//        appHandler.addServletWithMapping(javaClass<DefaultServlet>(), "/*")
-        appHandler.addServletWithMapping(ServletHolder(servlet), "/*")
+        val servletContextHandler = ServletContextHandler()
+        servletContextHandler.setContextPath("/")
+        servletContextHandler.setResourceBase(staticPath.getParent())
+        servletContextHandler.addServlet(ServletHolder(DefaultServlet()), "/static/*")
+        servletContextHandler.addServlet(ServletHolder(servlet), "/*")
 
-        server.setHandler(appHandler)
+        server.setHandler(servletContextHandler)
         server.addLifeCycleListener(serverListener)
         server.start()
         if (!onBackground) {
