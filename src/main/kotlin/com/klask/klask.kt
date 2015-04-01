@@ -1,5 +1,6 @@
 package com.klask
 
+import com.khtml.Node
 import com.klask.blueprint.Blueprint
 import com.klask.blueprint.BlueprintJar
 import com.klask.client.Client
@@ -8,7 +9,6 @@ import com.klask.jetty.KlaskServerListener
 import com.klask.router.Route
 import com.klask.router.Router
 import com.klask.servlet.KlaskHttpServlet
-import ko.html.Element
 import org.eclipse.jetty.servlet.DefaultServlet
 import org.eclipse.jetty.servlet.ServletContextHandler
 import org.eclipse.jetty.servlet.ServletHolder
@@ -59,13 +59,13 @@ class StringResponse(private val content: String, statusCode: Int = HttpServletR
     }
 }
 
-class ElementResponse(private val element: Element, statusCode: Int = HttpServletResponse.SC_OK) :
+class NodeResponse(private val node: Node, statusCode: Int = HttpServletResponse.SC_OK) :
         Response(statusCode = statusCode, contentType = "text/html", charset = "utf-8") {
     override val data: String
-        get() = element.toString()
+        get() = node.toString()
 
     override fun write(writer: Writer) {
-        element.render(writer)
+        node.render(writer)
     }
 }
 
@@ -133,7 +133,7 @@ open class Klask : Application(), KlaskApp {
                 val response: Response = when (result) {
                     is Response -> result
                     is String -> StringResponse(content = result)
-                    is Element -> ElementResponse(element = result)
+                    is Node -> NodeResponse(node = result)
                     else -> throw IllegalArgumentException()
                 }
                 resp.setContentType(response.contentType)

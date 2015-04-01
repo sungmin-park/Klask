@@ -1,9 +1,9 @@
 package com.klask.response
 
+import com.khtml.elements.Div
+import com.khtml.elements.Html
 import com.klask.Klask
 import com.klask.router.Route
-import ko.html.Div
-import ko.html.Html
 import org.junit.Assert
 import org.junit.Test
 
@@ -21,14 +21,14 @@ object app : Klask() {
     fun html(): Html {
         return Html {
             body {
-                h1(text = "html")
+                h1(text_ = "html")
             }
         }
     }
 
     Route("/korean.html")
     fun koreanHtml(): Div {
-        return Div(text = "한글")
+        return Div(text_ = "한글")
     }
 
     Route("/korean.text")
