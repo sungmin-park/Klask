@@ -1,26 +1,18 @@
 package com.klask.client
 
-import javax.servlet.http.HttpServletRequest
-import java.net.URL
-import java.util.Enumeration
-import javax.servlet.ServletInputStream
 import java.io.BufferedReader
-import java.util.Locale
-import javax.servlet.RequestDispatcher
-import javax.servlet.ServletContext
-import javax.servlet.AsyncContext
-import javax.servlet.ServletRequest
-import javax.servlet.ServletResponse
-import javax.servlet.DispatcherType
-import javax.servlet.http.Cookie
+import java.net.URL
+import java.net.URLDecoder
 import java.security.Principal
-import javax.servlet.http.HttpSession
-import javax.servlet.http.HttpServletResponse
-import javax.servlet.http.Part
-import javax.servlet.http.HttpUpgradeHandler
+import java.util.Enumeration
+import java.util.HashMap
+import java.util.Locale
+import javax.servlet.*
+import javax.servlet.http.*
 
 class ClientHttpServletRequest(val requestUrl: String) : HttpServletRequest {
     val url: URL
+
     init {
         val prefix = if (requestUrl.startsWith("http://")) "" else "http://localhost:5000"
         url = URL(prefix + requestUrl)
@@ -71,7 +63,16 @@ class ClientHttpServletRequest(val requestUrl: String) : HttpServletRequest {
     }
 
     override fun getParameterMap(): MutableMap<String, Array<String>>? {
-        throw UnsupportedOperationException()
+        return url.getQuery().split("&")
+                .map {
+                    it.split("=", 2).map { URLDecoder.decode(it, "utf-8") }
+                }
+                .groupBy { it[0] }
+                .map {
+                    it.key to it.value.map { it[1] }.copyToArray()
+                }
+                .toMap()
+                .toLinkedMap()
     }
 
     override fun getProtocol(): String? {
@@ -240,7 +241,7 @@ class ClientHttpServletRequest(val requestUrl: String) : HttpServletRequest {
 
     override fun getRequestURI(): String? {
         val file = url.getFile()
-        return if (file == "") "/" else file
+        return (if (file == "") "/" else file).split("[?]", 2)[0]
     }
 
     override fun getRequestURL(): StringBuffer? {

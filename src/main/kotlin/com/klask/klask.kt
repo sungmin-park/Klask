@@ -6,6 +6,8 @@ import com.klask.blueprint.BlueprintJar
 import com.klask.client.Client
 import com.klask.jetty.JettyServer
 import com.klask.jetty.KlaskServerListener
+import com.klask.requests.Request
+import com.klask.requests.RequestImpl
 import com.klask.router.Route
 import com.klask.router.Router
 import com.klask.servlet.KlaskHttpServlet
@@ -72,6 +74,7 @@ class NodeResponse(private val node: Node, statusCode: Int = HttpServletResponse
 trait KlaskApp {
     public val name: String
     public val router: Router
+    public val requestLocal: ThreadLocal<Request>
 }
 
 open class Klask : Application(), KlaskApp {
@@ -82,6 +85,7 @@ open class Klask : Application(), KlaskApp {
 
     private val serverReadyListeners = arrayListOf<(app: Klask) -> Unit>()
     private val serverListener = KlaskServerListener(this, serverReadyListeners);
+    override public val requestLocal = ThreadLocal<Request>()
 
     init {
         staticPath = File(javaClass.getResource("/static").getPath())
@@ -116,6 +120,7 @@ open class Klask : Application(), KlaskApp {
 
     fun processRequest(req: HttpServletRequest, resp: HttpServletResponse, method: RequestMethod): Response {
         pushContext()
+        requestLocal.set(RequestImpl(req))
         try {
             val handler = router.findHandler(req.getRequestURI().toString())
             try {
@@ -155,6 +160,7 @@ open class Klask : Application(), KlaskApp {
                 }
             }
         } finally {
+            requestLocal.remove()
             popContext()
         }
     }
@@ -198,9 +204,17 @@ open class Klask : Application(), KlaskApp {
 }
 
 object currentApp : KlaskApp {
+    override val requestLocal: ThreadLocal<Request>
+        get() = Klask.currentApp.requestLocal
+
     override val router: Router
         get() = Klask.currentApp.router
 
     override val name: String
         get() = Klask.currentApp.name
+}
+
+public object request : Request {
+    override val values: Map<String, Array<String>>
+        get() = currentApp.requestLocal.get().values
 }

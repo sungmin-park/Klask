@@ -1,13 +1,13 @@
 package com.klask.router
 
 import com.klask.Klask
-import com.klask.router.*
 import org.junit.Assert
 import org.junit.Test
 
 object app : Klask() {
     Route("/")
-    fun index() {
+    fun index(): String {
+        return "index"
     }
 
     Route("/post/<name>")
@@ -41,6 +41,12 @@ class RouterTest {
     fun testPathVariable() {
         val handler = app.router.findHandler("/article/images/nested-path/image-name.jpg")
         Assert.assertEquals("nested-path/image-name.jpg", handler?.parseResult?.pathVariables?.get("path"))
+    }
+
+    Test
+    fun testQueryString() {
+        Assert.assertEquals("index", app.client.get("/").data)
+        Assert.assertEquals("index", app.client.get("/?name=steve").data)
     }
 }
 
