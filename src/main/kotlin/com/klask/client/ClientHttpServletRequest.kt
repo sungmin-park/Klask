@@ -10,7 +10,7 @@ import java.util.Locale
 import javax.servlet.*
 import javax.servlet.http.*
 
-class ClientHttpServletRequest(val requestUrl: String) : HttpServletRequest {
+class ClientHttpServletRequest(val requestUrl: String, val _cookies: Array<Cookie>) : HttpServletRequest {
     val url: URL
 
     init {
@@ -180,7 +180,7 @@ class ClientHttpServletRequest(val requestUrl: String) : HttpServletRequest {
     }
 
     override fun getCookies(): Array<out Cookie>? {
-        throw UnsupportedOperationException()
+        return _cookies
     }
 
     override fun getDateHeader(name: String?): Long {

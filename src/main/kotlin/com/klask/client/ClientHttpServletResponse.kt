@@ -12,6 +12,7 @@ class ClientHttpServletResponse : HttpServletResponse {
     var statusCode: Int by Delegates.notNull()
     var charset: String? = null
     var _contentType: String? = null
+    var cookies = arrayListOf<Cookie>()
 
     override fun getCharacterEncoding(): String? {
         throw UnsupportedOperationException()
@@ -79,7 +80,7 @@ class ClientHttpServletResponse : HttpServletResponse {
     }
 
     override fun addCookie(cookie: Cookie?) {
-        throw UnsupportedOperationException()
+        cookies.add(cookie)
     }
 
     override fun containsHeader(name: String?): Boolean {

@@ -11,6 +11,8 @@ import com.klask.requests.RequestImpl
 import com.klask.router.Route
 import com.klask.router.Router
 import com.klask.servlet.KlaskHttpServlet
+import com.klask.sessions.Session
+import com.klask.sessions.SessionImpl
 import org.eclipse.jetty.servlet.DefaultServlet
 import org.eclipse.jetty.servlet.ServletContextHandler
 import org.eclipse.jetty.servlet.ServletHolder
@@ -18,6 +20,7 @@ import org.springframework.core.DefaultParameterNameDiscoverer
 import sun.reflect.generics.reflectiveObjects.NotImplementedException
 import java.io.File
 import java.io.Writer
+import javax.servlet.http.Cookie
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import kotlin.properties.Delegates
@@ -80,7 +83,8 @@ trait KlaskApp {
 open class Klask : Application(), KlaskApp {
     public var server: JettyServer by Delegates.notNull()
     private val servlet = KlaskHttpServlet(this)
-    public val client: Client = Client(this)
+    public val client: Client
+        get() = Client(this)
     public val staticPath: File
 
     private val serverReadyListeners = arrayListOf<(app: Klask) -> Unit>()
@@ -120,7 +124,10 @@ open class Klask : Application(), KlaskApp {
 
     fun processRequest(req: HttpServletRequest, resp: HttpServletResponse, method: RequestMethod): Response {
         pushContext()
-        requestLocal.set(RequestImpl(req))
+        val cookie = req.getCookies()?.firstOrNull { it.getName() == "session" }
+        val session = SessionImpl(cookie)
+        val request = RequestImpl(req, session)
+        requestLocal.set(request)
         try {
             val handler = router.findHandler(req.getRequestURI().toString())
             try {
@@ -143,6 +150,13 @@ open class Klask : Application(), KlaskApp {
                 }
                 resp.setContentType(response.contentType)
                 resp.setCharacterEncoding(response.charset)
+                val secure_cookie = session.serialize()
+                if (secure_cookie != null) {
+                    resp.addCookie(Cookie("session", secure_cookie).let {
+                        it.setPath("/")
+                        it
+                    })
+                }
                 when (response.statusCode) {
                     HttpServletResponse.SC_OK -> resp.setStatus(response.statusCode)
                     else ->
@@ -215,6 +229,9 @@ object currentApp : KlaskApp {
 }
 
 public object request : Request {
+    override val session: Session
+        get() = currentApp.requestLocal.get().session
+
     override val values: Map<String, Array<String>>
         get() = currentApp.requestLocal.get().values
 }
