@@ -37,9 +37,6 @@ abstract class Application {
     protected fun addBlueprint(front: Blueprint, urlPrefix: String = "") {
         blueprintJars.add(BlueprintJar(front, urlPrefix))
     }
-
-    open fun onTearDownRequest() {
-    }
 }
 
 abstract class Response(public val statusCode: Int, public val contentType: String? = null, val charset: String? = null) {
@@ -138,8 +135,12 @@ open class Klask : Application(), KlaskApp {
         val request = RequestImpl(req, session)
         requestLocal.set(request)
         try {
-            val handler = router.findHandler(req.getRequestURI().toString())
-            return context(handler, resp, session)
+            try {
+                val handler = router.findHandler(req.getRequestURI().toString())
+                return context(handler, resp, session)
+            } finally {
+                onTearDownRequest()
+            }
         } finally {
             requestLocal.remove()
             popContext()
@@ -153,54 +154,49 @@ open class Klask : Application(), KlaskApp {
     }
 
     private fun processResponse(handler: Handler?, resp: HttpServletResponse, session: SessionImpl): Response {
-        try {
-            val result: Any =
-                    if (handler == null) {
-                        EmptyResponse(HttpServletResponse.SC_NOT_FOUND)
-                    } else {
-                        val defaultParameterNameDiscoverer = DefaultParameterNameDiscoverer()
-                        val args = defaultParameterNameDiscoverer.getParameterNames(handler.method)
-                                .map { handler.parseResult?.pathVariables?.get(it) }
-                                .copyToArray()
-                        val res = handler.method.invoke(handler.appChain.first(), *args)
-                        res ?: EmptyResponse(HttpServletResponse.SC_OK)
-                    }
-            val response: Response = when (result) {
-                is Response -> result
-                is String -> StringResponse(content = result)
-                is Node -> NodeResponse(node = result)
-                else -> throw IllegalArgumentException()
-            }
-            resp.setContentType(response.contentType)
-            resp.setCharacterEncoding(response.charset)
-            val secure_cookie = session.serialize()
-            if (secure_cookie != null) {
-                resp.addCookie(Cookie("session", secure_cookie).let {
-                    it.setPath("/")
-                    it
-                })
-            }
-            when (response) {
-                is RedirectResponse -> resp.sendRedirect(response.location)
-                else -> {
-                    when (response.statusCode) {
-                        HttpServletResponse.SC_OK -> resp.setStatus(response.statusCode)
-                        else ->
-                            resp.sendError(response.statusCode)
-                    }
+        val result: Any =
+                if (handler == null) {
+                    EmptyResponse(HttpServletResponse.SC_NOT_FOUND)
+                } else {
+                    val defaultParameterNameDiscoverer = DefaultParameterNameDiscoverer()
+                    val args = defaultParameterNameDiscoverer.getParameterNames(handler.method)
+                            .map { handler.parseResult?.pathVariables?.get(it) }
+                            .copyToArray()
+                    val res = handler.method.invoke(handler.appChain.first(), *args)
+                    res ?: EmptyResponse(HttpServletResponse.SC_OK)
                 }
-            }
-            if (!resp.isCommitted()) {
-                resp.getWriter().use { response.write(it) }
-            }
-            return response
-        } finally {
-            if (handler != null) {
-                handler.appChain.forEach {
-                    it.onTearDownRequest()
+        val response: Response = when (result) {
+            is Response -> result
+            is String -> StringResponse(content = result)
+            is Node -> NodeResponse(node = result)
+            else -> throw IllegalArgumentException()
+        }
+        resp.setContentType(response.contentType)
+        resp.setCharacterEncoding(response.charset)
+        val secure_cookie = session.serialize()
+        if (secure_cookie != null) {
+            resp.addCookie(Cookie("session", secure_cookie).let {
+                it.setPath("/")
+                it
+            })
+        }
+        when (response) {
+            is RedirectResponse -> resp.sendRedirect(response.location)
+            else -> {
+                when (response.statusCode) {
+                    HttpServletResponse.SC_OK -> resp.setStatus(response.statusCode)
+                    else ->
+                        resp.sendError(response.statusCode)
                 }
             }
         }
+        if (!resp.isCommitted()) {
+            resp.getWriter().use { response.write(it) }
+        }
+        return response
+    }
+
+    open fun onTearDownRequest() {
     }
 
     fun doRequest(req: HttpServletRequest?, resp: HttpServletResponse?, method: RequestMethod) {
