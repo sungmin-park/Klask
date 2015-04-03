@@ -8,6 +8,7 @@ import com.klask.jetty.JettyServer
 import com.klask.jetty.KlaskServerListener
 import com.klask.requests.Request
 import com.klask.requests.RequestImpl
+import com.klask.router.Handler
 import com.klask.router.Route
 import com.klask.router.Router
 import com.klask.servlet.KlaskHttpServlet
@@ -122,7 +123,7 @@ open class Klask : Application(), KlaskApp {
         server.join()
     }
 
-    fun processRequest(req: HttpServletRequest, resp: HttpServletResponse, method: RequestMethod): Response {
+    fun <T> processRequestContext(req: HttpServletRequest, resp: HttpServletResponse, method: RequestMethod, context: Klask.(handler: Handler?, resp: HttpServletResponse, session: SessionImpl) -> T): T {
         pushContext()
         val cookie = req.getCookies()?.firstOrNull { it.getName() == "session" }
         val session = SessionImpl(cookie)
@@ -130,52 +131,62 @@ open class Klask : Application(), KlaskApp {
         requestLocal.set(request)
         try {
             val handler = router.findHandler(req.getRequestURI().toString())
-            try {
-                val result: Any =
-                        if (handler == null) {
-                            EmptyResponse(HttpServletResponse.SC_NOT_FOUND)
-                        } else {
-                            val defaultParameterNameDiscoverer = DefaultParameterNameDiscoverer()
-                            val args = defaultParameterNameDiscoverer.getParameterNames(handler.method)
-                                    .map { handler.parseResult?.pathVariables?.get(it) }
-                                    .copyToArray()
-                            val res = handler.method.invoke(handler.appChain.first(), *args)
-                            res ?: EmptyResponse(HttpServletResponse.SC_OK)
-                        }
-                val response: Response = when (result) {
-                    is Response -> result
-                    is String -> StringResponse(content = result)
-                    is Node -> NodeResponse(node = result)
-                    else -> throw IllegalArgumentException()
-                }
-                resp.setContentType(response.contentType)
-                resp.setCharacterEncoding(response.charset)
-                val secure_cookie = session.serialize()
-                if (secure_cookie != null) {
-                    resp.addCookie(Cookie("session", secure_cookie).let {
-                        it.setPath("/")
-                        it
-                    })
-                }
-                when (response.statusCode) {
-                    HttpServletResponse.SC_OK -> resp.setStatus(response.statusCode)
-                    else ->
-                        resp.sendError(response.statusCode)
-                }
-                if (!resp.isCommitted()) {
-                    resp.getWriter().use { response.write(it) }
-                }
-                return response
-            } finally {
-                if (handler != null) {
-                    handler.appChain.forEach {
-                        it.onTearDownRequest()
-                    }
-                }
-            }
+            return context(handler, resp, session)
         } finally {
             requestLocal.remove()
             popContext()
+        }
+    }
+
+    fun processRequest(req: HttpServletRequest, resp: HttpServletResponse, method: RequestMethod): Response {
+        return processRequestContext(req, resp, method) { handler, resp, session ->
+            processResponse(handler, resp, session)
+        }
+    }
+
+    private fun processResponse(handler: Handler?, resp: HttpServletResponse, session: SessionImpl): Response {
+        try {
+            val result: Any =
+                    if (handler == null) {
+                        EmptyResponse(HttpServletResponse.SC_NOT_FOUND)
+                    } else {
+                        val defaultParameterNameDiscoverer = DefaultParameterNameDiscoverer()
+                        val args = defaultParameterNameDiscoverer.getParameterNames(handler.method)
+                                .map { handler.parseResult?.pathVariables?.get(it) }
+                                .copyToArray()
+                        val res = handler.method.invoke(handler.appChain.first(), *args)
+                        res ?: EmptyResponse(HttpServletResponse.SC_OK)
+                    }
+            val response: Response = when (result) {
+                is Response -> result
+                is String -> StringResponse(content = result)
+                is Node -> NodeResponse(node = result)
+                else -> throw IllegalArgumentException()
+            }
+            resp.setContentType(response.contentType)
+            resp.setCharacterEncoding(response.charset)
+            val secure_cookie = session.serialize()
+            if (secure_cookie != null) {
+                resp.addCookie(Cookie("session", secure_cookie).let {
+                    it.setPath("/")
+                    it
+                })
+            }
+            when (response.statusCode) {
+                HttpServletResponse.SC_OK -> resp.setStatus(response.statusCode)
+                else ->
+                    resp.sendError(response.statusCode)
+            }
+            if (!resp.isCommitted()) {
+                resp.getWriter().use { response.write(it) }
+            }
+            return response
+        } finally {
+            if (handler != null) {
+                handler.appChain.forEach {
+                    it.onTearDownRequest()
+                }
+            }
         }
     }
 
@@ -229,9 +240,15 @@ object currentApp : KlaskApp {
 }
 
 public object request : Request {
+    private val r: Request
+        get() = currentApp.requestLocal.get()
+
+    override val path: String
+        get() = r.path
+
     override val session: Session
-        get() = currentApp.requestLocal.get().session
+        get() = r.session
 
     override val values: Map<String, Array<String>>
-        get() = currentApp.requestLocal.get().values
+        get() = r.values
 }

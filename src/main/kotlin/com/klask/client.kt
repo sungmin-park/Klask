@@ -20,4 +20,12 @@ public class Client(val app: Klask) {
             it
         }
     }
+
+    fun context(url: String, method: RequestMethod = RequestMethod.GET, context: () -> Unit) {
+        val request = ClientHttpServletRequest(url, cookies)
+        val response = ClientHttpServletResponse()
+        app.processRequestContext<Unit>(request, response, method) { a, b, c ->
+            context()
+        }
+    }
 }
