@@ -75,6 +75,14 @@ class NodeResponse(private val node: Node, statusCode: Int = HttpServletResponse
     }
 }
 
+class RedirectResponse(val location: String) : Response(statusCode = 302) {
+    override val data: String
+        get() = ""
+
+    override fun write(writer: Writer) {
+    }
+}
+
 trait KlaskApp {
     public val name: String
     public val router: Router
@@ -172,10 +180,15 @@ open class Klask : Application(), KlaskApp {
                     it
                 })
             }
-            when (response.statusCode) {
-                HttpServletResponse.SC_OK -> resp.setStatus(response.statusCode)
-                else ->
-                    resp.sendError(response.statusCode)
+            when (response) {
+                is RedirectResponse -> resp.sendRedirect(response.location)
+                else -> {
+                    when (response.statusCode) {
+                        HttpServletResponse.SC_OK -> resp.setStatus(response.statusCode)
+                        else ->
+                            resp.sendError(response.statusCode)
+                    }
+                }
             }
             if (!resp.isCommitted()) {
                 resp.getWriter().use { response.write(it) }

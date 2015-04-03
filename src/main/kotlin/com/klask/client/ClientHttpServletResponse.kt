@@ -13,6 +13,7 @@ class ClientHttpServletResponse : HttpServletResponse {
     var charset: String? = null
     var _contentType: String? = null
     var cookies = arrayListOf<Cookie>()
+    var location: String? = null
 
     override fun getCharacterEncoding(): String? {
         throw UnsupportedOperationException()
@@ -112,7 +113,7 @@ class ClientHttpServletResponse : HttpServletResponse {
     }
 
     override fun sendRedirect(location: String?) {
-        throw UnsupportedOperationException()
+        this.location = location
     }
 
     override fun setDateHeader(name: String?, date: Long) {

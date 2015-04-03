@@ -3,7 +3,9 @@ package com.klask.response
 import com.khtml.elements.Div
 import com.khtml.elements.Html
 import com.klask.Klask
+import com.klask.RedirectResponse
 import com.klask.router.Route
+import com.klask.shorthands.redirect
 import org.junit.Assert
 import org.junit.Test
 
@@ -35,6 +37,11 @@ object app : Klask() {
     fun koreanText(): String {
         return "한글"
     }
+
+    Route("/redirect")
+    fun redirect(): RedirectResponse {
+        return redirect("/redirect/stand-on")
+    }
 }
 
 class ResponseTest {
@@ -63,5 +70,13 @@ class ResponseTest {
         Assert.assertEquals("<div>한글</div>", app.server.get("/korean.html"))
         Assert.assertEquals("한글", app.server.get("/korean.text"))
         app.stop()
+    }
+
+    Test
+    fun testRedirect() {
+        app.client.get("/redirect").let {
+            Assert.assertEquals(302, it.statusCode)
+            Assert.assertEquals("/redirect/stand-on", (it as RedirectResponse).location)
+        }
     }
 }
