@@ -8,6 +8,7 @@ import com.klask.jetty.JettyServer
 import com.klask.jetty.KlaskServerListener
 import com.klask.requests.Request
 import com.klask.requests.RequestImpl
+import com.klask.requests.Values
 import com.klask.router.Handler
 import com.klask.router.Route
 import com.klask.router.Router
@@ -276,6 +277,6 @@ public object request : Request {
     override val session: Session
         get() = r.session
 
-    override val values: Map<String, Array<String>>
+    override val values: Values
         get() = r.values
 }

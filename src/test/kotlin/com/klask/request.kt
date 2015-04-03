@@ -39,6 +39,13 @@ class RequestTest {
     }
 
     Test
+    fun testGetDefault() {
+        app.client.context("/") {
+            Assert.assertEquals("steve", request.values.get("name", "steve"))
+        }
+    }
+
+    Test
     fun testContext() {
         app.client.context("/context?key=value") {
             Assert.assertArrayEquals(array("value"), request.values["key"])
