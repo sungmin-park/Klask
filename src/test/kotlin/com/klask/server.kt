@@ -1,7 +1,8 @@
 package com.klask.server
 
 import com.klask.Klask
-import com.klask.RedirectResponse
+import com.klask.Response
+import com.klask.request
 import com.klask.router.Route
 import com.klask.shorthands.redirect
 import com.klask.urlfor.urlfor
@@ -21,14 +22,16 @@ object app : Klask() {
         throw IllegalArgumentException(fileName)
     }
 
-    Route("/redirect")
-    fun redirect(): RedirectResponse {
-        return redirect(urlfor("redirectLand"))
+    Route("/shouldBeRedirected")
+    fun shouldBeRedirected(): String {
+        return "notRedirected"
     }
 
-    Route("/redirect/land")
-    fun redirectLand(): String {
-        return "land"
+    override fun onBeforeRequest(): Response? {
+        if (request.endpoint == "shouldBeRedirected") {
+            return redirect(urlfor("index"))
+        }
+        return null
     }
 }
 
@@ -55,6 +58,6 @@ class ServerTest {
 
     Test
     fun testRedirect() {
-        Assert.assertEquals("land", app.server.get("/redirect"))
+        Assert.assertEquals("index", app.server.get("/shouldBeRedirected"))
     }
 }

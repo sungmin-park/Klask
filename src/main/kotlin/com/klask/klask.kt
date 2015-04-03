@@ -161,20 +161,7 @@ open class Klask : Application(), KlaskApp {
                 if (handler == null) {
                     EmptyResponse(HttpServletResponse.SC_NOT_FOUND)
                 } else {
-                    var appChain = arrayListOf<Application>()
-                    for (it in handler.appChain.reverse()) {
-                        val beforeResponse = it.onBeforeRequest()
-                        appChain.add(it)
-                        if (beforeResponse != null) {
-                            return beforeResponse
-                        }
-                    }
-                    val defaultParameterNameDiscoverer = DefaultParameterNameDiscoverer()
-                    val args = defaultParameterNameDiscoverer.getParameterNames(handler.method)
-                            .map { handler.parseResult?.pathVariables?.get(it) }
-                            .copyToArray()
-                    val res = handler.method.invoke(handler.appChain.first(), *args)
-                    res ?: EmptyResponse(HttpServletResponse.SC_OK)
+                    processHandlerMethod(handler)
                 }
         val response: Response = when (result) {
             is Response -> result
@@ -205,6 +192,23 @@ open class Klask : Application(), KlaskApp {
             resp.getWriter().use { response.write(it) }
         }
         return response
+    }
+
+    private fun processHandlerMethod(handler: Handler): Any {
+        var appChain = arrayListOf<Application>()
+        for (it in handler.appChain.reverse()) {
+            val beforeResponse = it.onBeforeRequest()
+            appChain.add(it)
+            if (beforeResponse != null) {
+                return beforeResponse
+            }
+        }
+        val defaultParameterNameDiscoverer = DefaultParameterNameDiscoverer()
+        val args = defaultParameterNameDiscoverer.getParameterNames(handler.method)
+                .map { handler.parseResult?.pathVariables?.get(it) }
+                .copyToArray()
+        val res = handler.method.invoke(handler.appChain.first(), *args)
+        return res ?: EmptyResponse(HttpServletResponse.SC_OK)
     }
 
     open fun onTearDownRequest() {
