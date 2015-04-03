@@ -37,6 +37,10 @@ abstract class Application {
     protected fun addBlueprint(front: Blueprint, urlPrefix: String = "") {
         blueprintJars.add(BlueprintJar(front, urlPrefix))
     }
+
+    open public fun onBeforeRequest(): Response? {
+        return null
+    }
 }
 
 abstract class Response(public val statusCode: Int, public val contentType: String? = null, val charset: String? = null) {
@@ -132,12 +136,11 @@ open class Klask : Application(), KlaskApp {
         pushContext()
         val cookie = req.getCookies()?.firstOrNull { it.getName() == "session" }
         val session = SessionImpl(cookie)
-        val request = RequestImpl(req, session)
+        val request = RequestImpl(req, session, router.findHandler(req.getRequestURI().toString()))
         requestLocal.set(request)
         try {
             try {
-                val handler = router.findHandler(req.getRequestURI().toString())
-                return context(handler, resp, session)
+                return context(request.handler, resp, session)
             } finally {
                 onTearDownRequest()
             }
@@ -158,6 +161,14 @@ open class Klask : Application(), KlaskApp {
                 if (handler == null) {
                     EmptyResponse(HttpServletResponse.SC_NOT_FOUND)
                 } else {
+                    var appChain = arrayListOf<Application>()
+                    for (it in handler.appChain.reverse()) {
+                        val beforeResponse = it.onBeforeRequest()
+                        appChain.add(it)
+                        if (beforeResponse != null) {
+                            return beforeResponse
+                        }
+                    }
                     val defaultParameterNameDiscoverer = DefaultParameterNameDiscoverer()
                     val args = defaultParameterNameDiscoverer.getParameterNames(handler.method)
                             .map { handler.parseResult?.pathVariables?.get(it) }
@@ -249,6 +260,9 @@ object currentApp : KlaskApp {
 }
 
 public object request : Request {
+    override val endpoint: String
+        get() = r.endpoint
+
     private val r: Request
         get() = currentApp.requestLocal.get()
 

@@ -145,4 +145,9 @@ fun match(rulePattern: RulePattern, uri: String): Map<String, Any>? {
     return map
 }
 
-public data class Handler(val appChain: ArrayList<Application>, val method: Method, val route: Route, val parseResult: ParseResult?)
+public data class Handler(val appChain: ArrayList<Application>, val method: Method, val route: Route, val parseResult: ParseResult?) {
+    public val endpoint: String
+        get() {
+            return (appChain.reverse().drop(1).map { it.name } + method.getName()).join(".")
+        }
+}
