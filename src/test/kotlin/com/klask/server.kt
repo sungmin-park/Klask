@@ -22,6 +22,11 @@ object app : Klask() {
         return request.method.toString()
     }
 
+    Route("/parameter")
+    fun parameter(): String {
+        return request.values.get("name", "")
+    }
+
     Route("/static/<fileName:path>")
     override fun static(fileName: String): String {
         throw IllegalArgumentException(fileName)
@@ -70,5 +75,10 @@ class ServerTest {
     fun testMethod() {
         Assert.assertEquals("GET", app.server.get("/method"))
         Assert.assertEquals("POST", app.server.post("/method"))
+    }
+
+    Test
+    fun testPostParameter() {
+        Assert.assertEquals("steve", app.server.post("/parameter", listOf("name" to "steve")))
     }
 }

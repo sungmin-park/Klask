@@ -1,11 +1,12 @@
 package com.klask.client
 
-import org.junit.Test
 import com.klask.Klask
+import com.klask.RequestMethod
+import com.klask.request
 import com.klask.router.Route
 import org.junit.Assert
+import org.junit.Test
 import javax.servlet.http.HttpServletResponse
-import com.klask.RequestMethod
 
 
 object app : Klask() {
@@ -23,6 +24,11 @@ object app : Klask() {
     fun post(): String {
         return "post"
     }
+
+    Route("/parameter")
+    fun parameter(): String {
+        return request.values.get("name", "")
+    }
 }
 
 class ClientTest {
@@ -38,6 +44,7 @@ class ClientTest {
         val res = app.client.get("/get")
         Assert.assertEquals(HttpServletResponse.SC_OK, res.statusCode)
         Assert.assertEquals("get", res.data)
+        Assert.assertEquals("steve", app.client.get("/parameter?name=steve").data)
     }
 
     Test
@@ -45,5 +52,6 @@ class ClientTest {
         val res = app.client.post("/post")
         Assert.assertEquals(HttpServletResponse.SC_OK, res.statusCode)
         Assert.assertEquals("post", res.data)
+        Assert.assertEquals("steve", app.client.post("/parameter", listOf("name" to "steve")).data)
     }
 }

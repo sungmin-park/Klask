@@ -11,7 +11,7 @@ import javax.servlet.*
 import javax.servlet.http.*
 
 class ClientHttpServletRequest(private val requestUrl: String, private val _cookies: Array<Cookie>,
-                               val _method: RequestMethod) : HttpServletRequest {
+                               val _method: RequestMethod, private val data: Map<String, List<String>>) : HttpServletRequest {
     private val url: URL
 
     init {
@@ -63,21 +63,29 @@ class ClientHttpServletRequest(private val requestUrl: String, private val _cook
         throw UnsupportedOperationException()
     }
 
-    override fun getParameterMap(): MutableMap<String, Array<String>>? {
-        val query = url.getQuery()
-        return when (query) {
-            null -> null
-            else -> query.split("&")
-                    .map {
-                        it.split("=", 2).map { URLDecoder.decode(it, "utf-8") }
-                    }
-                    .groupBy { it[0] }
-                    .map {
-                        it.key to it.value.map { it[1] }.copyToArray()
-                    }
-                    .toMap()
-                    .toLinkedMap()
+    private val args: Map<String, List<String>>
+        get() {
+            val query = url.getQuery()
+            return when (query) {
+                null, "" -> mapOf()
+                else ->
+                    query.split("&")
+                            .map {
+                                it.split("=", 2).map { URLDecoder.decode(it, "utf-8") }
+                            }
+                            .groupBy { it[0] }
+                            .map {
+                                it.key to it.value.map { it[1] }
+                            }
+                            .toMap()
+            }
         }
+
+    override fun getParameterMap(): MutableMap<String, Array<String>>? {
+        return (args.keySet() + data.keySet())
+                .map { it to ((args.get(it) ?: listOf()) + (data.get(it) ?: listOf())).copyToArray() }
+                .toMap()
+                .toLinkedMap()
     }
 
     override fun getProtocol(): String? {
