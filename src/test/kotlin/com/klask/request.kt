@@ -34,8 +34,26 @@ object app : Klask() {
 
 class RequestTest {
     Test
-    fun testGet() {
+    fun testGetParameter() {
         Assert.assertEquals("steve", app.client.get("/?name=steve").data)
+    }
+
+    Test
+    fun testIsGet() {
+        app.client.context("/") {
+            Assert.assertEquals(RequestMethod.GET, request.method)
+            Assert.assertTrue(request.isGet)
+            Assert.assertFalse(request.isPost)
+        }
+    }
+
+    Test
+    fun testIsPost() {
+        app.client.context("/", method = RequestMethod.POST) {
+            Assert.assertEquals(RequestMethod.POST, request.method)
+            Assert.assertFalse(request.isGet)
+            Assert.assertTrue(request.isPost)
+        }
     }
 
     Test

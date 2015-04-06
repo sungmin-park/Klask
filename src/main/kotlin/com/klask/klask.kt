@@ -216,9 +216,6 @@ open class Klask : Application(), KlaskApp {
     }
 
     fun doRequest(req: HttpServletRequest?, resp: HttpServletResponse?, method: RequestMethod) {
-        if (method == RequestMethod.POST) {
-            throw NotImplementedException()
-        }
         processRequest(req = req!!, resp = resp!!, method = method)
     }
 
@@ -265,6 +262,15 @@ object currentApp : KlaskApp {
 }
 
 public object request : Request {
+    override val isGet: Boolean
+        get() = r.isGet
+
+    override val isPost: Boolean
+        get() = r.isPost
+
+    override val method: RequestMethod
+        get() = r.method
+
     override val endpoint: String
         get() = r.endpoint
 

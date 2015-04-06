@@ -1,5 +1,6 @@
 package com.klask.client
 
+import com.klask.RequestMethod
 import java.io.BufferedReader
 import java.net.URL
 import java.net.URLDecoder
@@ -9,8 +10,9 @@ import java.util.Locale
 import javax.servlet.*
 import javax.servlet.http.*
 
-class ClientHttpServletRequest(val requestUrl: String, val _cookies: Array<Cookie>) : HttpServletRequest {
-    val url: URL
+class ClientHttpServletRequest(private val requestUrl: String, private val _cookies: Array<Cookie>,
+                               val _method: RequestMethod) : HttpServletRequest {
+    private val url: URL
 
     init {
         val prefix = if (requestUrl.startsWith("http://")) "" else "http://localhost:5000"
@@ -207,7 +209,7 @@ class ClientHttpServletRequest(val requestUrl: String, val _cookies: Array<Cooki
     }
 
     override fun getMethod(): String? {
-        throw UnsupportedOperationException()
+        return _method.toString()
     }
 
     override fun getPathInfo(): String? {

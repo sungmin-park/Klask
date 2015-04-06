@@ -18,6 +18,11 @@ object app : Klask() {
     fun get(): String {
         return "get"
     }
+
+    Route("/post")
+    fun post(): String {
+        return "post"
+    }
 }
 
 class ClientTest {
@@ -33,5 +38,12 @@ class ClientTest {
         val res = app.client.get("/get")
         Assert.assertEquals(HttpServletResponse.SC_OK, res.statusCode)
         Assert.assertEquals("get", res.data)
+    }
+
+    Test
+    fun testPost() {
+        val res = app.client.post("/post")
+        Assert.assertEquals(HttpServletResponse.SC_OK, res.statusCode)
+        Assert.assertEquals("post", res.data)
     }
 }

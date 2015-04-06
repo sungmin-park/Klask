@@ -17,6 +17,11 @@ object app : Klask() {
         return "index"
     }
 
+    Route("/method")
+    fun method(): String {
+        return request.method.toString()
+    }
+
     Route("/static/<fileName:path>")
     override fun static(fileName: String): String {
         throw IllegalArgumentException(fileName)
@@ -59,5 +64,11 @@ class ServerTest {
     Test
     fun testRedirect() {
         Assert.assertEquals("index", app.server.get("/shouldBeRedirected"))
+    }
+
+    Test
+    fun testMethod() {
+        Assert.assertEquals("GET", app.server.get("/method"))
+        Assert.assertEquals("POST", app.server.post("/method"))
     }
 }

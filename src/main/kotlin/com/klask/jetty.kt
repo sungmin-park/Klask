@@ -1,8 +1,10 @@
 package com.klask.jetty
 
 import com.klask.Klask
+import com.klask.RequestMethod
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.util.component.LifeCycle
+import java.net.HttpURLConnection
 import java.net.URL
 
 class KlaskServerListener(val app: Klask, val serverReadyListeners: List<(Klask) -> Unit>) : LifeCycle.Listener {
@@ -28,6 +30,16 @@ public class JettyServer(val port: Int) : Server(port) {
     public fun get(url: String): String {
         return URL("http://localhost:$port$url")
                 .openConnection()
+                .getInputStream().use { it.reader().readText() }
+    }
+
+    public fun post(url: String): String {
+        return URL("http://localhost:$port$url")
+                .openConnection().let { it as HttpURLConnection }
+                .let {
+                    it.setRequestMethod(RequestMethod.POST.toString())
+                    it
+                }
                 .getInputStream().use { it.reader().readText() }
     }
 }

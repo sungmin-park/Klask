@@ -12,8 +12,12 @@ public class Client(val app: Klask) {
         return request(url = url, method = RequestMethod.GET)
     }
 
+    public fun post(url: String): Response {
+        return request(url = url, method = RequestMethod.POST)
+    }
+
     fun request(url: String, method: RequestMethod): Response {
-        val request = ClientHttpServletRequest(url, cookies)
+        val request = ClientHttpServletRequest(url, cookies, method)
         val response = ClientHttpServletResponse()
         return app.processRequest(req = request, resp = response, method = method).let {
             cookies = response.cookies.copyToArray()
@@ -22,7 +26,7 @@ public class Client(val app: Klask) {
     }
 
     fun context(url: String, method: RequestMethod = RequestMethod.GET, context: () -> Unit) {
-        val request = ClientHttpServletRequest(url, cookies)
+        val request = ClientHttpServletRequest(url, cookies, method)
         val response = ClientHttpServletResponse()
         app.processRequestContext<Unit>(request, response, method) { a, b, c ->
             context()
