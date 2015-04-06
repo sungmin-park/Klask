@@ -8,11 +8,11 @@ import javax.servlet.http.HttpServletResponse
 
 class KlaskHttpServlet(val app: Klask) : HttpServlet() {
     override fun doGet(req: HttpServletRequest?, resp: HttpServletResponse?) {
-        app.doRequest(req, resp, RequestMethod.GET)
+        app.processRequest(req!!, resp!!)
     }
 
     override fun doPost(req: HttpServletRequest?, resp: HttpServletResponse?) {
-        app.doRequest(req, resp, RequestMethod.POST)
+        app.processRequest(req!!, resp!!)
     }
 }
 

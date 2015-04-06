@@ -133,7 +133,7 @@ open class Klask : Application(), KlaskApp {
         server.join()
     }
 
-    fun <T> processRequestContext(req: HttpServletRequest, resp: HttpServletResponse, method: RequestMethod, context: Klask.(handler: Handler?, resp: HttpServletResponse, session: SessionImpl) -> T): T {
+    fun <T> processRequestContext(req: HttpServletRequest, resp: HttpServletResponse, context: Klask.(handler: Handler?, resp: HttpServletResponse, session: SessionImpl) -> T): T {
         pushContext()
         val cookie = req.getCookies()?.firstOrNull { it.getName() == "session" }
         val session = SessionImpl(cookie)
@@ -151,8 +151,8 @@ open class Klask : Application(), KlaskApp {
         }
     }
 
-    fun processRequest(req: HttpServletRequest, resp: HttpServletResponse, method: RequestMethod): Response {
-        return processRequestContext(req, resp, method) { handler, resp, session ->
+    fun processRequest(req: HttpServletRequest, resp: HttpServletResponse): Response {
+        return processRequestContext(req, resp) { handler, resp, session ->
             processResponse(handler, resp, session)
         }
     }
@@ -213,10 +213,6 @@ open class Klask : Application(), KlaskApp {
     }
 
     open fun onTearDownRequest() {
-    }
-
-    fun doRequest(req: HttpServletRequest?, resp: HttpServletResponse?, method: RequestMethod) {
-        processRequest(req = req!!, resp = resp!!, method = method)
     }
 
     Route("/static/<fileName:path>")
