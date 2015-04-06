@@ -5,7 +5,6 @@ import java.net.URL
 import java.net.URLDecoder
 import java.security.Principal
 import java.util.Enumeration
-import java.util.HashMap
 import java.util.Locale
 import javax.servlet.*
 import javax.servlet.http.*
@@ -63,16 +62,20 @@ class ClientHttpServletRequest(val requestUrl: String, val _cookies: Array<Cooki
     }
 
     override fun getParameterMap(): MutableMap<String, Array<String>>? {
-        return url.getQuery().split("&")
-                .map {
-                    it.split("=", 2).map { URLDecoder.decode(it, "utf-8") }
-                }
-                .groupBy { it[0] }
-                .map {
-                    it.key to it.value.map { it[1] }.copyToArray()
-                }
-                .toMap()
-                .toLinkedMap()
+        val query = url.getQuery()
+        return when (query) {
+            null -> null
+            else -> query.split("&")
+                    .map {
+                        it.split("=", 2).map { URLDecoder.decode(it, "utf-8") }
+                    }
+                    .groupBy { it[0] }
+                    .map {
+                        it.key to it.value.map { it[1] }.copyToArray()
+                    }
+                    .toMap()
+                    .toLinkedMap()
+        }
     }
 
     override fun getProtocol(): String? {

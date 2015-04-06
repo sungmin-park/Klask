@@ -25,5 +25,5 @@ class RequestImpl(val servlet: HttpServletRequest, public override val session: 
         get() = servlet.getRequestURI()
 
     override val values: Values
-        get() = Values(servlet.getParameterMap())
+        get() = Values(servlet.getParameterMap() ?: mapOf() )
 }
